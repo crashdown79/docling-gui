@@ -572,7 +572,7 @@ class MainWindow(ctk.CTk):
         # Version info
         version_label = ctk.CTkLabel(
             status_frame,
-            text="Docling GUI v1.2.3",
+            text="Docling GUI v1.2.4",
             font=ctk.CTkFont(size=10),
             text_color="gray60"
         )
