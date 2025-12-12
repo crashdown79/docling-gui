@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 import platform
 from typing import Optional
+from datetime import datetime
 
 from core.converter import DoclingConverter
 from config import Config
@@ -33,10 +34,16 @@ class MainWindow(ctk.CTk):
         # State variables
         self.selected_file: Optional[str] = None
         self.is_processing = False
+        self.log_file_handle = None
+        self.current_log_file = None
 
         # Create UI
         self._create_widgets()
         self._check_docling()
+
+        # Auto-start logging if enabled
+        if self.enable_log_var.get():
+            self._create_log_file()
 
         # Window close handler
         self.protocol("WM_DELETE_WINDOW", self._on_closing)
@@ -504,12 +511,26 @@ class MainWindow(ctk.CTk):
         console_frame.grid_columnconfigure(0, weight=1)
         console_frame.grid_rowconfigure(1, weight=1)
 
-        # Label
+        # Title and log enable checkbox
+        title_frame = ctk.CTkFrame(console_frame, fg_color="transparent")
+        title_frame.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="ew")
+
         ctk.CTkLabel(
-            console_frame,
+            title_frame,
             text="Console Output",
             font=ctk.CTkFont(size=14, weight="bold")
-        ).grid(row=0, column=0, padx=10, pady=(10, 5), sticky="w")
+        ).pack(side="left")
+
+        # Log enable checkbox
+        enable_logging = self.config.get("general", "enableLogging", default=False)
+        self.enable_log_var = ctk.BooleanVar(value=enable_logging)
+        log_check = ctk.CTkCheckBox(
+            title_frame,
+            text="💾 Save to Log File",
+            variable=self.enable_log_var,
+            command=self._on_log_enable_change
+        )
+        log_check.pack(side="left", padx=20)
 
         # Text widget
         self.console_text = ctk.CTkTextbox(
@@ -551,7 +572,7 @@ class MainWindow(ctk.CTk):
         # Version info
         version_label = ctk.CTkLabel(
             status_frame,
-            text="Docling GUI v1.2.1",
+            text="Docling GUI v1.2.2",
             font=ctk.CTkFont(size=10),
             text_color="gray60"
         )
@@ -853,10 +874,77 @@ class MainWindow(ctk.CTk):
             self.status_var.set("Ready")
             self.ready_label.configure(text="● Ready", text_color="green")
 
+    def _create_log_file(self):
+        """Create a new log file with timestamp."""
+        if self.log_file_handle:
+            self._close_log_file()
+
+        log_dir = Path(self.config.get("general", "logDirectory",
+                                       default=str(Path.home() / "Documents" / "docling_logs")))
+        log_dir.mkdir(parents=True, exist_ok=True)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        log_filename = f"docling_log_{timestamp}.txt"
+        self.current_log_file = log_dir / log_filename
+
+        try:
+            self.log_file_handle = open(self.current_log_file, 'w', encoding='utf-8')
+            header = f"Docling GUI Log File\n"
+            header += f"Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+            header += f"="*60 + "\n\n"
+            self.log_file_handle.write(header)
+            self.log_file_handle.flush()
+            return True
+        except Exception as e:
+            messagebox.showerror("Log File Error", f"Failed to create log file: {str(e)}")
+            self.enable_log_var.set(False)
+            self.current_log_file = None
+            return False
+
+    def _close_log_file(self):
+        """Close the current log file."""
+        if self.log_file_handle:
+            try:
+                footer = f"\n{'='*60}\n"
+                footer += f"Log ended: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+                self.log_file_handle.write(footer)
+                self.log_file_handle.close()
+            except:
+                pass
+            finally:
+                self.log_file_handle = None
+                self.current_log_file = None
+
+    def _on_log_enable_change(self):
+        """Handle log enable checkbox change."""
+        enabled = self.enable_log_var.get()
+        self.config.set("general", "enableLogging", value=enabled)
+
+        if enabled:
+            if self._create_log_file():
+                self._log_console(f"✓ Logging enabled. Saving to: {self.current_log_file}\n")
+        else:
+            if self.current_log_file:
+                log_path = str(self.current_log_file)
+                self._close_log_file()
+                self._log_console(f"✓ Logging disabled. Log saved to: {log_path}\n")
+
     def _log_console(self, text: str):
-        """Add text to console output."""
+        """Add text to console output and optionally to log file."""
         self.console_text.insert("end", text)
         self.console_text.see("end")
+
+        # Write to log file if logging is enabled
+        if self.enable_log_var.get() and self.log_file_handle:
+            try:
+                self.log_file_handle.write(text)
+                self.log_file_handle.flush()
+            except Exception as e:
+                # Disable logging on error
+                self.enable_log_var.set(False)
+                self.config.set("general", "enableLogging", value=False)
+                self._close_log_file()
+                self.console_text.insert("end", f"\n[ERROR] Log file write failed: {str(e)}\n")
 
     def _clear_console(self):
         """Clear console output."""
@@ -868,6 +956,9 @@ class MainWindow(ctk.CTk):
         if self.is_processing:
             if not messagebox.askyesno("Quit", "Conversion in progress. Are you sure you want to quit?"):
                 return
+
+        # Close log file if open
+        self._close_log_file()
 
         # Save window size
         geometry = self.geometry().split('+')[0]  # Get WxH

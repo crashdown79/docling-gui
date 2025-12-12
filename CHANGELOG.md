@@ -5,6 +5,45 @@ All notable changes to the Docling GUI project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2025-12-12
+
+### Added
+- **Console Log to File Feature**: Save console output to timestamped log files
+  - New checkbox "💾 Save to Log File" in Console Output section
+  - Automatically creates timestamped log files (format: `docling_log_YYYYMMDD_HHMMSS.txt`)
+  - Default log directory: `~/Documents/docling_logs/`
+  - Custom log directory configurable in settings
+  - Log files include header with start time and footer with end time
+  - Real-time writing to log file as console output appears
+  - Auto-closes log file on application exit or when logging disabled
+  - Persistent setting saved in configuration
+  - Error handling with automatic fallback if file write fails
+
+### Changed
+- Console Output section title bar now includes log enable checkbox
+- Log files are automatically created when checkbox is enabled
+- Log files are automatically closed when checkbox is disabled or app closes
+- Configuration version updated to 1.2.2
+
+### Technical
+- Added `enableLogging` boolean to configuration (default: false)
+- Added `logDirectory` path to configuration (default: `~/Documents/docling_logs`)
+- Added `log_file_handle` and `current_log_file` state variables
+- Added `_create_log_file()` method to create timestamped log files
+- Added `_close_log_file()` method to properly close log files with footer
+- Added `_on_log_enable_change()` callback for checkbox state changes
+- Enhanced `_log_console()` to write to file when logging enabled
+- Updated `_on_closing()` to close log file on application exit
+- Added auto-start logging on app launch if previously enabled
+- Imported `datetime` module for timestamp generation
+
+### UI Changes
+- Console Output section title bar reorganized with checkbox on right
+- Log file path shown in console when logging enabled/disabled
+- Visual confirmation messages for log enable/disable actions
+
+---
+
 ## [1.2.1] - 2025-12-12
 
 ### Added

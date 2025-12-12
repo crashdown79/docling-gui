@@ -26,13 +26,15 @@ class Config:
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default configuration."""
         return {
-            "version": "1.2.1",
+            "version": "1.2.2",
             "general": {
                 "defaultOutputDir": str(Path.home() / "Documents" / "docling_output"),
                 "useLastOutputDir": True,
                 "defaultOutputFormat": "md",
                 "autoOpenOutputFolder": False,
-                "rememberWindowGeometry": True
+                "rememberWindowGeometry": True,
+                "enableLogging": False,
+                "logDirectory": str(Path.home() / "Documents" / "docling_logs")
             },
             "processing": {
                 "mode": "online",

@@ -6,10 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a GUI wrapper for the Docling command-line tool, which converts various document formats (PDF, DOCX, PPTX, HTML, images, etc.) to different output formats (Markdown, JSON, HTML, text).
 
-**Current Status**: v1.2.1 - SmolVLM model download and collapsible options added
+**Current Status**: v1.2.2 - Console log to file feature added
 **Framework**: Python + CustomTkinter
 **Architecture**: Modular design with core conversion logic and UI components separated
-**Latest Release**: Added SmolVLM-256M-Instruct model download option and collapsible Processing Options section
+**Latest Release**: Added console log to file feature with timestamped log files and persistent configuration
 
 ## Target Platforms
 
@@ -116,7 +116,7 @@ docling-gui/
     └── main_window.py    # MainWindow class - CustomTkinter UI
 ```
 
-### Features Implemented (v1.2.1)
+### Features Implemented (v1.2.2)
 - ✅ File selection via dialog picker
 - ✅ Output format selection (all 6 formats)
 - ✅ Output directory selection with "Open Folder" button
@@ -128,8 +128,9 @@ docling-gui/
 - ✅ Image export mode selector: Dropdown with all 3 options (v1.2.0)
 - ✅ Verbose mode control: 0/1/2 for normal/-v/-vv logging (v1.2.0)
 - ✅ Model download button: Download models for offline operation (v1.2.0)
-- ✅ **SmolVLM-256M-Instruct download**: Third model option in download dialog (NEW in v1.2.1)
-- ✅ **Collapsible options section**: Toggle button to show/hide processing options (NEW in v1.2.1)
+- ✅ SmolVLM-256M-Instruct download: Third model option in download dialog (v1.2.1)
+- ✅ Collapsible options section: Toggle button to show/hide processing options (v1.2.1)
+- ✅ **Console log to file**: Save console output to timestamped log files (NEW in v1.2.2)
 - ✅ Convert/Cancel buttons with state management
 - ✅ Real-time console output from Docling
 - ✅ Progress bar with indeterminate mode
@@ -412,4 +413,109 @@ docling-tools models download-hf-repo ds4sd/SmolDocling-256M-preview
 
 # SmolVLM-256M-Instruct (Vision-Language Model) - NEW
 docling-tools models download-hf-repo HuggingFaceTB/SmolVLM-256M-Instruct
+```
+
+### New Features (v1.2.2)
+
+**Console Log to File**:
+- **Feature**: Save all console output to timestamped log files
+- **Implementation**:
+  - Added "💾 Save to Log File" checkbox in Console Output section header
+  - Checkbox state persists in configuration (`general.enableLogging`)
+  - Custom log directory configurable (`general.logDirectory`)
+  - Default location: `~/Documents/docling_logs/`
+  - Log files named: `docling_log_YYYYMMDD_HHMMSS.txt`
+  - Log file includes header with start timestamp
+  - Log file includes footer with end timestamp
+  - Real-time writing: every console message immediately written to file
+  - Auto-flush after each write for reliability
+  - Automatic log file creation when checkbox enabled
+  - Automatic log file closure when checkbox disabled or app exits
+  - Error handling: disables logging if file write fails
+- **Benefits**:
+  - Keep permanent records of all conversions
+  - Debugging and troubleshooting
+  - Track processing history
+  - Share conversion logs with team/support
+  - Audit trail for document processing
+- **UI Location**: Console Output section header, next to title
+
+**Log File Format**:
+```
+Docling GUI Log File
+Started: 2025-12-12 18:57:23
+============================================================
+
+[Console output here...]
+
+============================================================
+Log ended: 2025-12-12 19:15:42
+```
+
+**Configuration Updates**:
+- Version bumped to 1.2.2
+- New configuration keys:
+  - `enableLogging` (boolean, default: false)
+  - `logDirectory` (string, default: `~/Documents/docling_logs`)
+
+**Methods Added**:
+- `MainWindow._create_log_file()`: Creates new timestamped log file
+  - Creates log directory if needed
+  - Opens file with UTF-8 encoding
+  - Writes header with timestamp
+  - Returns success/failure status
+- `MainWindow._close_log_file()`: Closes log file gracefully
+  - Writes footer with end timestamp
+  - Closes file handle
+  - Cleans up state variables
+- `MainWindow._on_log_enable_change()`: Handles checkbox state changes
+  - Saves preference to configuration
+  - Creates/closes log file as needed
+  - Shows confirmation in console
+
+**Enhanced Methods**:
+- `MainWindow._log_console(text)`: Updated to write to file
+  - Writes to console textbox (unchanged)
+  - Additionally writes to log file if enabled
+  - Flushes file after each write
+  - Disables logging on write errors
+- `MainWindow._on_closing()`: Updated to close log file
+  - Ensures log file is properly closed on app exit
+  - Prevents data loss
+
+**State Variables Added**:
+- `self.log_file_handle`: File handle for current log file
+- `self.current_log_file`: Path to current log file
+- `self.enable_log_var`: BooleanVar for checkbox state
+
+**Auto-Start Behavior**:
+- If logging was enabled in previous session, automatically creates new log file on app launch
+- User sees immediate feedback in console
+
+**Error Handling**:
+- File creation errors shown in error dialog
+- Checkbox automatically unchecked on error
+- Write errors disable logging and show message in console
+- Graceful fallback: continues operation without logging
+
+**Use Cases**:
+```
+1. Troubleshooting failed conversions
+   - Enable logging before conversion
+   - Review log file for error details
+
+2. Batch processing audit trail
+   - Enable logging at start
+   - Run multiple conversions
+   - Single log file records all operations
+
+3. Support requests
+   - Enable logging
+   - Reproduce issue
+   - Share log file with support team
+
+4. Process documentation
+   - Keep logs for compliance
+   - Archive conversion records
+   - Track what was converted when
 ```
