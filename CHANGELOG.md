@@ -5,6 +5,37 @@ All notable changes to the Docling GUI project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.4] - 2025-12-12
+
+### Fixed
+- **Critical Bug**: Offline mode now works correctly with downloaded models
+  - Fixed artifacts path: Now passes `{artifacts_path}/models` to docling CLI
+  - Previous (broken): Was passing `{artifacts_path}` which pointed to wrong location
+  - Models are downloaded to `models/` subdirectory by docling-tools
+  - Docling CLI expects `--artifacts-path` to point to the models directory
+  - Validation now checks correct model directory structure
+  - Resolves GitHub issue #1: "After downloading models, offline mode still shows models not loaded"
+
+### Changed
+- Updated `build_command()` to append `/models` to artifacts path
+- Updated `check_models_downloaded()` to check proper directory structure
+- Now validates `models/docling-project--docling-layout-heron/` directory
+- Checks for both `model.safetensors` and `config.json` in model directory
+- Better error messages showing actual missing model names
+
+### Technical
+- `build_command()` now passes `{artifacts_path}/models` to `--artifacts-path` flag
+- `check_models_downloaded()` checks `{artifacts_path}/models/{model_name}/`
+- Validates layout model: `docling-project--docling-layout-heron`
+- Returns descriptive missing model messages (e.g., "model_name/model.safetensors")
+- Handles missing models directory gracefully
+
+### Example
+Before: `--artifacts-path /Users/user/.cache/docling` ❌ (wrong)
+After: `--artifacts-path /Users/user/.cache/docling/models` ✅ (correct)
+
+---
+
 ## [1.2.3] - 2025-12-12
 
 ### Added

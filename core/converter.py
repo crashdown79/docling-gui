@@ -59,21 +59,32 @@ class DoclingConverter:
             Tuple of (all_found: bool, missing_files: list[str])
         """
         artifacts_dir = Path(artifacts_path)
+        models_dir = artifacts_dir / "models"
 
-        # Required model files for standard pipeline
-        required_files = [
-            "model.safetensors",  # Layout model
-            "config.json",        # Model config
+        # Check if models directory exists
+        if not models_dir.exists():
+            return (False, ["models directory not found"])
+
+        # Required models for standard pipeline (minimum needed)
+        required_models = [
+            "docling-project--docling-layout-heron",  # Layout detection model
         ]
 
-        missing_files = []
+        missing_models = []
 
-        for file in required_files:
-            file_path = artifacts_dir / file
-            if not file_path.exists():
-                missing_files.append(file)
+        for model_name in required_models:
+            model_path = models_dir / model_name
+            model_file = model_path / "model.safetensors"
+            config_file = model_path / "config.json"
 
-        return (len(missing_files) == 0, missing_files)
+            if not model_path.exists():
+                missing_models.append(f"{model_name} (directory not found)")
+            elif not model_file.exists():
+                missing_models.append(f"{model_name}/model.safetensors")
+            elif not config_file.exists():
+                missing_models.append(f"{model_name}/config.json")
+
+        return (len(missing_models) == 0, missing_models)
 
     def build_command(
         self,
@@ -142,7 +153,9 @@ class DoclingConverter:
 
         # Artifacts path (for offline mode)
         if artifacts_path:
-            cmd.extend(["--artifacts-path", artifacts_path])
+            # Models are in 'models' subdirectory
+            models_path = str(Path(artifacts_path) / "models")
+            cmd.extend(["--artifacts-path", models_path])
 
         return cmd
 
