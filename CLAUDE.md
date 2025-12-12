@@ -6,10 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a GUI wrapper for the Docling command-line tool, which converts various document formats (PDF, DOCX, PPTX, HTML, images, etc.) to different output formats (Markdown, JSON, HTML, text).
 
-**Current Status**: v1.2.2 - Console log to file feature added
+**Current Status**: v1.2.3 - Offline mode validation added
 **Framework**: Python + CustomTkinter
 **Architecture**: Modular design with core conversion logic and UI components separated
-**Latest Release**: Added console log to file feature with timestamped log files and persistent configuration
+**Latest Release**: Added offline mode model validation to prevent errors and provide helpful guidance
 
 ## Target Platforms
 
@@ -116,7 +116,7 @@ docling-gui/
     └── main_window.py    # MainWindow class - CustomTkinter UI
 ```
 
-### Features Implemented (v1.2.2)
+### Features Implemented (v1.2.3)
 - ✅ File selection via dialog picker
 - ✅ Output format selection (all 6 formats)
 - ✅ Output directory selection with "Open Folder" button
@@ -130,7 +130,8 @@ docling-gui/
 - ✅ Model download button: Download models for offline operation (v1.2.0)
 - ✅ SmolVLM-256M-Instruct download: Third model option in download dialog (v1.2.1)
 - ✅ Collapsible options section: Toggle button to show/hide processing options (v1.2.1)
-- ✅ **Console log to file**: Save console output to timestamped log files (NEW in v1.2.2)
+- ✅ Console log to file: Save console output to timestamped log files (v1.2.2)
+- ✅ **Offline mode validation**: Checks if models are downloaded before conversion (NEW in v1.2.3)
 - ✅ Convert/Cancel buttons with state management
 - ✅ Real-time console output from Docling
 - ✅ Progress bar with indeterminate mode
@@ -519,3 +520,99 @@ Log ended: 2025-12-12 19:15:42
    - Archive conversion records
    - Track what was converted when
 ```
+
+### New Features (v1.2.3)
+
+**Offline Mode Model Validation**:
+- **Feature**: Prevents conversion errors by validating model availability before offline mode conversion
+- **Problem Solved**: Users no longer encounter cryptic `FileNotFoundError: Missing safe tensors file` errors
+- **Implementation**:
+  - Added `check_models_downloaded(artifacts_path)` method to `DoclingConverter`
+  - Validates presence of required model files before starting conversion
+  - Checks for: `model.safetensors`, `config.json` in artifacts directory
+  - Returns tuple: (all_found: bool, missing_files: list[str])
+  - Validation runs automatically when offline mode is selected
+  - Shows detailed error dialog if models are missing
+  - Lists specific missing files
+  - Provides step-by-step instructions to fix the issue
+  - UI state properly restored when validation fails
+- **Benefits**:
+  - Prevents confusing error messages mid-conversion
+  - Saves user time by catching issue early
+  - Provides actionable guidance on how to fix
+  - Improves user experience for offline mode
+  - Reduces support requests
+- **Trigger**: Automatic validation when user clicks "Convert" in offline mode
+
+**Error Dialog Content**:
+```
+Offline Mode: Required models not found!
+
+Missing files in /Users/user/.cache/docling:
+  • model.safetensors
+  • config.json
+
+To use Offline mode:
+1. Click '📥 Download Models' button
+2. Select 'All Standard Models'
+3. Wait for download to complete
+4. Try conversion again
+
+Or switch to Online mode to download models automatically.
+```
+
+**Configuration Updates**:
+- Version bumped to 1.2.3
+- No new configuration keys (backward compatible)
+
+**Methods Added**:
+- `DoclingConverter.check_models_downloaded(artifacts_path)`: Validates model file presence
+  - Takes artifacts directory path as parameter
+  - Checks for required model files
+  - Returns success status and list of missing files
+  - Used before offline conversions
+
+**Enhanced Methods**:
+- `MainWindow._start_conversion()`: Added offline mode validation
+  - Calls `check_models_downloaded()` when offline mode selected
+  - Shows error dialog if models missing
+  - Restores UI state (buttons, progress bar, status)
+  - Prevents conversion from starting
+  - User can then download models or switch to online mode
+
+**Validation Logic**:
+```python
+if self.processing_mode_var.get() == "offline":
+    artifacts_path = self.config.get("processing", "artifactsPath")
+    models_ok, missing_files = self.converter.check_models_downloaded(artifacts_path)
+    if not models_ok:
+        # Show error dialog with missing files and instructions
+        # Restore UI state
+        # Return early to prevent conversion
+```
+
+**User Flow**:
+```
+1. User selects file and offline mode
+2. User clicks "Convert"
+3. System validates model availability
+4. If missing:
+   - Show error dialog with instructions
+   - User downloads models via "📥 Download Models" button
+   - User retries conversion
+5. If present:
+   - Conversion proceeds normally
+```
+
+**Error Prevention**:
+- **Before v1.2.3**: Conversion would start, then fail mid-process with technical error
+- **After v1.2.3**: Validation catches issue immediately with helpful guidance
+
+**Required Files Checked**:
+- `model.safetensors`: Layout model weights
+- `config.json`: Model configuration
+
+**Future Enhancements** (not yet implemented):
+- Check for additional VLM/ASR model files when those pipelines selected
+- Estimate download size when suggesting model download
+- Auto-download models when offline mode first enabled

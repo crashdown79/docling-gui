@@ -5,6 +5,54 @@ All notable changes to the Docling GUI project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2025-12-12
+
+### Added
+- **Offline Mode Model Validation**: Prevents conversion errors by checking if models are downloaded
+  - Added `check_models_downloaded()` method to verify required model files exist
+  - Validates model availability before starting offline mode conversion
+  - Shows detailed error dialog if models are missing
+  - Lists missing files and provides step-by-step guidance
+  - Suggests downloading models or switching to online mode
+  - Prevents `FileNotFoundError: Missing safe tensors file` error
+
+### Changed
+- Offline mode conversion now validates model availability first
+- Error messages are more helpful with actionable instructions
+- Configuration version updated to 1.2.3
+
+### Fixed
+- **Critical**: Offline mode no longer fails with cryptic error when models not downloaded
+- Users now get clear guidance on how to fix missing models issue
+- UI state properly restored when validation fails
+
+### Technical
+- Added `check_models_downloaded(artifacts_path)` to `DoclingConverter` class
+  - Returns tuple: (all_found: bool, missing_files: list[str])
+  - Checks for required files: model.safetensors, config.json
+- Added validation in `_start_conversion()` before processing
+- Restores UI state (buttons, progress bar) when validation fails
+- Error dialog provides detailed troubleshooting steps
+
+### Error Message Example
+```
+Offline Mode: Required models not found!
+
+Missing files in /Users/user/.cache/docling:
+  • model.safetensors
+  • config.json
+
+To use Offline mode:
+1. Click '📥 Download Models' button
+2. Select 'All Standard Models'
+3. Wait for download to complete
+4. Try conversion again
+
+Or switch to Online mode to download models automatically.
+```
+
+---
+
 ## [1.2.2] - 2025-12-12
 
 ### Added

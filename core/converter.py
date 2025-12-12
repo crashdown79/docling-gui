@@ -48,6 +48,33 @@ class DoclingConverter:
             # Check if docling executable exists
             return os.path.exists(self.docling_path) or shutil.which('docling') is not None
 
+    def check_models_downloaded(self, artifacts_path: str) -> tuple[bool, list[str]]:
+        """
+        Check if required models are downloaded for offline operation.
+
+        Args:
+            artifacts_path: Path to model artifacts directory
+
+        Returns:
+            Tuple of (all_found: bool, missing_files: list[str])
+        """
+        artifacts_dir = Path(artifacts_path)
+
+        # Required model files for standard pipeline
+        required_files = [
+            "model.safetensors",  # Layout model
+            "config.json",        # Model config
+        ]
+
+        missing_files = []
+
+        for file in required_files:
+            file_path = artifacts_dir / file
+            if not file_path.exists():
+                missing_files.append(file)
+
+        return (len(missing_files) == 0, missing_files)
+
     def build_command(
         self,
         input_path: str,

@@ -572,7 +572,7 @@ class MainWindow(ctk.CTk):
         # Version info
         version_label = ctk.CTkLabel(
             status_frame,
-            text="Docling GUI v1.2.2",
+            text="Docling GUI v1.2.3",
             font=ctk.CTkFont(size=10),
             text_color="gray60"
         )
@@ -676,6 +676,30 @@ class MainWindow(ctk.CTk):
         artifacts_path = None
         if self.processing_mode_var.get() == "offline":
             artifacts_path = self.config.get("processing", "artifactsPath")
+
+            # Check if models are downloaded for offline mode
+            models_ok, missing_files = self.converter.check_models_downloaded(artifacts_path)
+            if not models_ok:
+                self.is_processing = False
+                self.convert_btn.configure(state="normal")
+                self.cancel_btn.configure(state="disabled")
+                self.select_btn.configure(state="normal")
+                self.progress_bar.stop()
+                self.status_var.set("Ready")
+                self.ready_label.configure(text="● Ready", text_color="green")
+
+                error_msg = "Offline Mode: Required models not found!\n\n"
+                error_msg += f"Missing files in {artifacts_path}:\n"
+                error_msg += "\n".join(f"  • {f}" for f in missing_files)
+                error_msg += "\n\nTo use Offline mode:\n"
+                error_msg += "1. Click '📥 Download Models' button\n"
+                error_msg += "2. Select 'All Standard Models'\n"
+                error_msg += "3. Wait for download to complete\n"
+                error_msg += "4. Try conversion again\n\n"
+                error_msg += "Or switch to Online mode to download models automatically."
+
+                messagebox.showerror("Models Required", error_msg)
+                return
 
         # Start conversion
         self.converter.convert(
