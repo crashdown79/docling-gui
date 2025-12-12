@@ -6,10 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a GUI wrapper for the Docling command-line tool, which converts various document formats (PDF, DOCX, PPTX, HTML, images, etc.) to different output formats (Markdown, JSON, HTML, text).
 
-**Current Status**: v1.2.0 - Image export mode selector, verbose mode, and model download feature added
+**Current Status**: v1.2.1 - SmolVLM model download and collapsible options added
 **Framework**: Python + CustomTkinter
 **Architecture**: Modular design with core conversion logic and UI components separated
-**Latest Release**: Added image export mode selector, verbose mode control, and model download button
+**Latest Release**: Added SmolVLM-256M-Instruct model download option and collapsible Processing Options section
 
 ## Target Platforms
 
@@ -116,7 +116,7 @@ docling-gui/
     └── main_window.py    # MainWindow class - CustomTkinter UI
 ```
 
-### Features Implemented (v1.2.0)
+### Features Implemented (v1.2.1)
 - ✅ File selection via dialog picker
 - ✅ Output format selection (all 6 formats)
 - ✅ Output directory selection with "Open Folder" button
@@ -125,9 +125,11 @@ docling-gui/
 - ✅ OCR language selection with preset buttons (v1.1.0)
 - ✅ Pipeline selection (Standard, VLM, ASR)
 - ✅ Enrichment options: Formulas, Picture Classes, Picture Descriptions (v1.1.0)
-- ✅ **Image export mode selector**: Dropdown with all 3 options (NEW in v1.2.0)
-- ✅ **Verbose mode control**: 0/1/2 for normal/-v/-vv logging (NEW in v1.2.0)
-- ✅ **Model download button**: Download models for offline operation (NEW in v1.2.0)
+- ✅ Image export mode selector: Dropdown with all 3 options (v1.2.0)
+- ✅ Verbose mode control: 0/1/2 for normal/-v/-vv logging (v1.2.0)
+- ✅ Model download button: Download models for offline operation (v1.2.0)
+- ✅ **SmolVLM-256M-Instruct download**: Third model option in download dialog (NEW in v1.2.1)
+- ✅ **Collapsible options section**: Toggle button to show/hide processing options (NEW in v1.2.1)
 - ✅ Convert/Cancel buttons with state management
 - ✅ Real-time console output from Docling
 - ✅ Progress bar with indeterminate mode
@@ -339,4 +341,75 @@ This ensures the GUI always uses the correct, user-owned Docling installation.
   -vv \
   --enrich-formula \
   --enrich-picture-classes
+```
+
+### New Features (v1.2.1)
+
+**SmolVLM-256M-Instruct Model Download**:
+- **Feature**: Third model option in offline download dialog
+- **Implementation**:
+  - Added `download_smolvlm` parameter to `DoclingConverter.download_models()`
+  - New checkbox in download dialog: "SmolVLM-256M-Instruct (Vision-Language Model)"
+  - Downloads HuggingFaceTB/SmolVLM-256M-Instruct model
+  - Command: `docling-tools models download-hf-repo HuggingFaceTB/SmolVLM-256M-Instruct`
+  - Dialog resized from 400x250 to 500x300 to accommodate three options
+- **Benefits**:
+  - Vision-Language Model for enhanced document understanding
+  - Better handling of complex visual layouts
+  - Improved VLM pipeline performance
+- **UI Location**: Model download dialog (accessed via "📥 Download Models" button)
+
+**Collapsible Processing Options**:
+- **Feature**: Toggle button to show/hide entire Processing Options section
+- **Implementation**:
+  - Added toggle button (▼/▶) next to "Processing Options" title
+  - Uses `grid_remove()`/`grid()` for smooth visibility toggling
+  - Stored in `self.opts_container` instance variable
+  - State tracked with `options_visible` BooleanVar
+  - Button text changes: ▼ when expanded, ▶ when collapsed
+- **Benefits**:
+  - Saves screen space when options not needed
+  - Reduces visual clutter for simple conversions
+  - Quick access to toggle without scrolling
+  - No window resize needed
+- **Default State**: Expanded (visible)
+- **UI Location**: Processing Options section header
+
+**Configuration Updates**:
+- Version bumped to 1.2.1
+- No new configuration keys (backward compatible)
+
+**Methods Added**:
+- `MainWindow._toggle_options()`: Toggles visibility of processing options container
+  - Manages `grid_remove()` and `grid()` calls
+  - Updates toggle button text
+  - Updates `options_visible` state
+
+**Variables Changed**:
+- Renamed: `download_smol_var` → `download_smoldocling_var` for clarity
+- Changed: `opts_container` → `self.opts_container` (instance variable)
+
+**Download Dialog Layout**:
+```
+┌──────────────────────────────────────────┐
+│     Select Models to Download           │
+├──────────────────────────────────────────┤
+│  ☑ All Standard Models                  │
+│  ☐ SmolDocling-256M                     │
+│  ☐ SmolVLM-256M-Instruct      [NEW]     │
+│                                          │
+│        [Download]  [Cancel]              │
+└──────────────────────────────────────────┘
+```
+
+**Model Download Commands**:
+```bash
+# All standard models
+docling-tools models download
+
+# SmolDocling-256M (VLM for complex layouts)
+docling-tools models download-hf-repo ds4sd/SmolDocling-256M-preview
+
+# SmolVLM-256M-Instruct (Vision-Language Model) - NEW
+docling-tools models download-hf-repo HuggingFaceTB/SmolVLM-256M-Instruct
 ```

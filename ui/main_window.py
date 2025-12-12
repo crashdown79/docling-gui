@@ -181,20 +181,34 @@ class MainWindow(ctk.CTk):
         options_frame.grid(row=3, column=0, padx=20, pady=10, sticky="ew")
         options_frame.grid_columnconfigure(0, weight=1)
 
-        # Section title
+        # Section title with toggle button
+        title_frame = ctk.CTkFrame(options_frame, fg_color="transparent")
+        title_frame.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="ew")
+
+        self.options_visible = ctk.BooleanVar(value=True)
+        self.toggle_btn = ctk.CTkButton(
+            title_frame,
+            text="▼",
+            width=30,
+            height=24,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            command=self._toggle_options
+        )
+        self.toggle_btn.pack(side="left", padx=(0, 10))
+
         ctk.CTkLabel(
-            options_frame,
+            title_frame,
             text="Processing Options",
             font=ctk.CTkFont(size=14, weight="bold")
-        ).grid(row=0, column=0, padx=10, pady=(10, 5), sticky="w")
+        ).pack(side="left")
 
         # Options container
-        opts_container = ctk.CTkFrame(options_frame, fg_color="transparent")
-        opts_container.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="ew")
-        opts_container.grid_columnconfigure((0, 1, 2, 3), weight=1)
+        self.opts_container = ctk.CTkFrame(options_frame, fg_color="transparent")
+        self.opts_container.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="ew")
+        self.opts_container.grid_columnconfigure((0, 1, 2, 3), weight=1)
 
         # Processing Mode
-        mode_frame = ctk.CTkFrame(opts_container, fg_color="transparent")
+        mode_frame = ctk.CTkFrame(self.opts_container, fg_color="transparent")
         mode_frame.grid(row=0, column=0, padx=5, pady=5, sticky="w")
 
         ctk.CTkLabel(
@@ -225,7 +239,7 @@ class MainWindow(ctk.CTk):
         ocr_enabled = self.config.get("defaults", "ocrEnabled", default=True)
         self.ocr_var = ctk.BooleanVar(value=ocr_enabled)
         ocr_check = ctk.CTkCheckBox(
-            opts_container,
+            self.opts_container,
             text="Enable OCR",
             variable=self.ocr_var,
             font=ctk.CTkFont(weight="bold")
@@ -236,14 +250,14 @@ class MainWindow(ctk.CTk):
         force_ocr = self.config.get("defaults", "forceOcr", default=False)
         self.force_ocr_var = ctk.BooleanVar(value=force_ocr)
         force_ocr_check = ctk.CTkCheckBox(
-            opts_container,
+            self.opts_container,
             text="Force OCR",
             variable=self.force_ocr_var
         )
         force_ocr_check.grid(row=0, column=2, padx=5, pady=5, sticky="w")
 
         # Pipeline
-        pipeline_frame = ctk.CTkFrame(opts_container, fg_color="transparent")
+        pipeline_frame = ctk.CTkFrame(self.opts_container, fg_color="transparent")
         pipeline_frame.grid(row=0, column=3, padx=5, pady=5, sticky="w")
 
         ctk.CTkLabel(
@@ -263,7 +277,7 @@ class MainWindow(ctk.CTk):
         pipeline_menu.pack(side="left")
 
         # Row 1: OCR Language
-        ocr_lang_frame = ctk.CTkFrame(opts_container, fg_color="transparent")
+        ocr_lang_frame = ctk.CTkFrame(self.opts_container, fg_color="transparent")
         ocr_lang_frame.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="ew")
 
         ctk.CTkLabel(
@@ -306,7 +320,7 @@ class MainWindow(ctk.CTk):
             btn.pack(side="left", padx=2)
 
         # Row 2: Enrichment options
-        enrich_frame = ctk.CTkFrame(opts_container, fg_color="transparent")
+        enrich_frame = ctk.CTkFrame(self.opts_container, fg_color="transparent")
         enrich_frame.grid(row=2, column=0, columnspan=4, padx=5, pady=5, sticky="w")
 
         ctk.CTkLabel(
@@ -343,7 +357,7 @@ class MainWindow(ctk.CTk):
         ).pack(side="left", padx=5)
 
         # Row 3: Image Export Mode and Verbose
-        settings_frame = ctk.CTkFrame(opts_container, fg_color="transparent")
+        settings_frame = ctk.CTkFrame(self.opts_container, fg_color="transparent")
         settings_frame.grid(row=3, column=0, columnspan=4, padx=5, pady=5, sticky="w")
 
         # Image Export Mode
@@ -403,6 +417,19 @@ class MainWindow(ctk.CTk):
         # Extract the number from the choice string
         verbose_level = int(choice.split()[0])
         self.verbose_var.set(verbose_level)
+
+    def _toggle_options(self):
+        """Toggle visibility of processing options."""
+        if self.options_visible.get():
+            # Hide options
+            self.opts_container.grid_remove()
+            self.toggle_btn.configure(text="▶")
+            self.options_visible.set(False)
+        else:
+            # Show options
+            self.opts_container.grid()
+            self.toggle_btn.configure(text="▼")
+            self.options_visible.set(True)
 
     def _add_ocr_language(self, lang_code):
         """Add language code to OCR languages field."""
@@ -524,7 +551,7 @@ class MainWindow(ctk.CTk):
         # Version info
         version_label = ctk.CTkLabel(
             status_frame,
-            text="Docling GUI v1.2.0",
+            text="Docling GUI v1.2.1",
             font=ctk.CTkFont(size=10),
             text_color="gray60"
         )
@@ -666,7 +693,7 @@ class MainWindow(ctk.CTk):
         # Ask user which models to download
         dialog = ctk.CTkToplevel(self)
         dialog.title("Download Models")
-        dialog.geometry("400x250")
+        dialog.geometry("500x300")
         dialog.transient(self)
         dialog.grab_set()
 
@@ -689,7 +716,8 @@ class MainWindow(ctk.CTk):
         ).pack(pady=10)
 
         download_all_var = ctk.BooleanVar(value=True)
-        download_smol_var = ctk.BooleanVar(value=False)
+        download_smoldocling_var = ctk.BooleanVar(value=False)
+        download_smolvlm_var = ctk.BooleanVar(value=False)
 
         ctk.CTkCheckBox(
             dialog,
@@ -701,7 +729,14 @@ class MainWindow(ctk.CTk):
         ctk.CTkCheckBox(
             dialog,
             text="SmolDocling-256M (VLM model for complex layouts)",
-            variable=download_smol_var,
+            variable=download_smoldocling_var,
+            font=ctk.CTkFont(size=12)
+        ).pack(pady=5, padx=20, anchor="w")
+
+        ctk.CTkCheckBox(
+            dialog,
+            text="SmolVLM-256M-Instruct (Vision-Language Model)",
+            variable=download_smolvlm_var,
             font=ctk.CTkFont(size=12)
         ).pack(pady=5, padx=20, anchor="w")
 
@@ -709,7 +744,7 @@ class MainWindow(ctk.CTk):
         button_frame.pack(pady=20)
 
         def start_download():
-            if not download_all_var.get() and not download_smol_var.get():
+            if not download_all_var.get() and not download_smoldocling_var.get() and not download_smolvlm_var.get():
                 messagebox.showwarning("No Selection", "Please select at least one model to download.")
                 return
 
@@ -727,7 +762,8 @@ class MainWindow(ctk.CTk):
 
             self.converter.download_models(
                 download_all=download_all_var.get(),
-                download_smoldocling=download_smol_var.get(),
+                download_smoldocling=download_smoldocling_var.get(),
+                download_smolvlm=download_smolvlm_var.get(),
                 on_output=self._on_conversion_output,
                 on_complete=self._on_download_complete,
                 on_error=lambda err: messagebox.showerror("Download Error", err)

@@ -5,6 +5,45 @@ All notable changes to the Docling GUI project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2025-12-12
+
+### Added
+- **SmolVLM-256M-Instruct Model Download**: Third option in model download dialog
+  - New checkbox for HuggingFaceTB/SmolVLM-256M-Instruct model
+  - Command: `docling-tools models download-hf-repo HuggingFaceTB/SmolVLM-256M-Instruct`
+  - Vision-Language Model for enhanced document understanding
+  - Dialog expanded from 400x250 to 500x300 to accommodate new option
+
+- **Collapsible Processing Options**: Toggle visibility of options section
+  - New toggle button (▼/▶) next to "Processing Options" title
+  - Click to show/hide all processing options
+  - Saves screen space when options not needed
+  - Default state: visible (expanded)
+
+### Changed
+- Model download dialog now has 3 checkboxes (was 2):
+  1. All Standard Models
+  2. SmolDocling-256M
+  3. SmolVLM-256M-Instruct (NEW)
+- Processing Options section can now be collapsed/expanded
+- Variable renamed: `download_smol_var` → `download_smoldocling_var` for clarity
+
+### Technical
+- Added `download_smolvlm` parameter to `DoclingConverter.download_models()`
+- Added SmolVLM download logic in `download_models()` method
+- Added `_toggle_options()` method to toggle visibility
+- Added `options_visible` BooleanVar to track state
+- Added `toggle_btn` button widget for expand/collapse
+- Changed `opts_container` to instance variable `self.opts_container`
+- Updated all references to use `self.opts_container`
+
+### UI Changes
+- Toggle button shows ▼ when expanded, ▶ when collapsed
+- Options container uses `grid_remove()`/`grid()` for smooth hiding/showing
+- No window resize needed - space is reclaimed when collapsed
+
+---
+
 ## [1.2.0] - 2025-12-12
 
 ### Added

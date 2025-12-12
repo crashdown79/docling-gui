@@ -251,6 +251,7 @@ class DoclingConverter:
         self,
         download_all: bool = True,
         download_smoldocling: bool = False,
+        download_smolvlm: bool = False,
         on_output: Optional[Callable[[str], None]] = None,
         on_complete: Optional[Callable[[int], None]] = None,
         on_error: Optional[Callable[[str], None]] = None
@@ -261,6 +262,7 @@ class DoclingConverter:
         Args:
             download_all: If True, run 'docling-tools models download'
             download_smoldocling: If True, download SmolDocling model
+            download_smolvlm: If True, download SmolVLM model
             on_output: Callback for stdout/stderr output
             on_complete: Callback for completion (receives return code)
             on_error: Callback for errors
@@ -336,6 +338,37 @@ class DoclingConverter:
                         total_return_code = return_code
                         if on_output:
                             on_output(f"\n[WARNING] SmolDocling download returned code {return_code}\n")
+
+                # Download SmolVLM model
+                if download_smolvlm:
+                    if on_output:
+                        on_output("\n" + "="*60 + "\n")
+                        on_output("Downloading SmolVLM-256M-Instruct model...\n")
+                        on_output("="*60 + "\n")
+
+                    cmd = ["docling-tools", "models", "download-hf-repo", "HuggingFaceTB/SmolVLM-256M-Instruct"]
+                    if on_output:
+                        on_output(f"Executing: {' '.join(cmd)}\n\n")
+
+                    self.current_process = subprocess.Popen(
+                        cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                        bufsize=1,
+                        universal_newlines=True
+                    )
+
+                    if self.current_process.stdout:
+                        for line in self.current_process.stdout:
+                            if on_output:
+                                on_output(line)
+
+                    return_code = self.current_process.wait()
+                    if return_code != 0:
+                        total_return_code = return_code
+                        if on_output:
+                            on_output(f"\n[WARNING] SmolVLM download returned code {return_code}\n")
 
                 if on_output:
                     on_output("\n" + "="*60 + "\n")
