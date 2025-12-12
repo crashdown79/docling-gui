@@ -7,6 +7,7 @@ from typing import Optional
 from datetime import datetime
 
 from core.converter import DoclingConverter
+from core.queue import ConversionQueue, QueueItem, QueueItemStatus
 from config import Config
 
 
@@ -19,11 +20,12 @@ class MainWindow(ctk.CTk):
         # Initialize components
         self.config = Config()
         self.converter = DoclingConverter()
+        self.queue = ConversionQueue()
 
         # Window setup
         self.title("Docling GUI - Document Converter")
         width = self.config.get("window", "width", default=900)
-        height = self.config.get("window", "height", default=750)
+        height = self.config.get("window", "height", default=900)  # Increased for queue section
         self.geometry(f"{width}x{height}")
 
         # Set theme
@@ -36,6 +38,8 @@ class MainWindow(ctk.CTk):
         self.is_processing = False
         self.log_file_handle = None
         self.current_log_file = None
+        self.current_queue_item: Optional[QueueItem] = None
+        self.queue_mode = False  # True when processing queue, False for single file
 
         # Create UI
         self._create_widgets()
@@ -52,7 +56,7 @@ class MainWindow(ctk.CTk):
         """Create all UI widgets."""
         # Configure grid
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(5, weight=1)  # Console row expands
+        self.grid_rowconfigure(7, weight=1)  # Console row expands
 
         # Title
         title_label = ctk.CTkLabel(
@@ -64,6 +68,9 @@ class MainWindow(ctk.CTk):
 
         # Input Section
         self._create_input_section()
+
+        # Queue Section (NEW)
+        self._create_queue_section()
 
         # Output Section
         self._create_output_section()
@@ -92,7 +99,7 @@ class MainWindow(ctk.CTk):
         # Label
         ctk.CTkLabel(
             input_frame,
-            text="Input File:",
+            text="Input:",
             font=ctk.CTkFont(weight="bold")
         ).grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
@@ -105,30 +112,130 @@ class MainWindow(ctk.CTk):
         )
         self.file_path_label.grid(row=0, column=1, padx=10, pady=10, sticky="ew")
 
-        # Select file button
+        # Button container
+        btn_frame = ctk.CTkFrame(input_frame, fg_color="transparent")
+        btn_frame.grid(row=0, column=2, padx=10, pady=10)
+
+        # Select file button (single file)
         self.select_btn = ctk.CTkButton(
-            input_frame,
+            btn_frame,
             text="Select File",
             command=self._select_file,
-            width=120
+            width=110
         )
-        self.select_btn.grid(row=0, column=2, padx=10, pady=10)
+        self.select_btn.pack(side="left", padx=(0, 5))
 
-        # Drag and drop frame
-        self.drop_frame = ctk.CTkFrame(input_frame, height=100, fg_color="gray25")
-        self.drop_frame.grid(row=1, column=0, columnspan=3, padx=10, pady=(0, 10), sticky="ew")
-
-        drop_label = ctk.CTkLabel(
-            self.drop_frame,
-            text="📄 Drag & drop files here (coming soon) or use 'Select File' button",
-            font=ctk.CTkFont(size=12)
+        # Add Files button (multiple files to queue)
+        self.add_files_btn = ctk.CTkButton(
+            btn_frame,
+            text="➕ Add Files",
+            command=self._add_files_to_queue,
+            width=110,
+            fg_color="gray40",
+            hover_color="gray30"
         )
-        drop_label.place(relx=0.5, rely=0.5, anchor="center")
+        self.add_files_btn.pack(side="left", padx=5)
+
+        # Add Folder button
+        self.add_folder_btn = ctk.CTkButton(
+            btn_frame,
+            text="📁 Add Folder",
+            command=self._add_folder_to_queue,
+            width=110,
+            fg_color="gray40",
+            hover_color="gray30"
+        )
+        self.add_folder_btn.pack(side="left", padx=(5, 0))
+
+    def _create_queue_section(self):
+        """Create batch queue section."""
+        queue_frame = ctk.CTkFrame(self)
+        queue_frame.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
+        queue_frame.grid_columnconfigure(0, weight=1)
+
+        # Section title with toggle button and stats
+        title_frame = ctk.CTkFrame(queue_frame, fg_color="transparent")
+        title_frame.grid(row=0, column=0, padx=10, pady=(10, 5), sticky="ew")
+        title_frame.grid_columnconfigure(1, weight=1)
+
+        # Toggle button
+        self.queue_visible = ctk.BooleanVar(value=False)  # Collapsed by default
+        self.queue_toggle_btn = ctk.CTkButton(
+            title_frame,
+            text="▶",
+            width=30,
+            height=24,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            command=self._toggle_queue
+        )
+        self.queue_toggle_btn.grid(row=0, column=0, padx=(0, 5))
+
+        # Title
+        ctk.CTkLabel(
+            title_frame,
+            text="Batch Queue",
+            font=ctk.CTkFont(size=14, weight="bold")
+        ).grid(row=0, column=1, sticky="w")
+
+        # Queue statistics
+        self.queue_stats_var = ctk.StringVar(value="(0 files)")
+        self.queue_stats_label = ctk.CTkLabel(
+            title_frame,
+            textvariable=self.queue_stats_var,
+            font=ctk.CTkFont(size=12),
+            text_color="gray60"
+        )
+        self.queue_stats_label.grid(row=0, column=2, padx=10)
+
+        # Queue container (collapsible)
+        self.queue_container = ctk.CTkFrame(queue_frame)
+        # Start hidden
+        # self.queue_container.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="ew")
+        self.queue_container.grid_columnconfigure(0, weight=1)
+        self.queue_container.grid_rowconfigure(0, weight=1)
+
+        # Queue list (scrollable)
+        self.queue_list_frame = ctk.CTkScrollableFrame(
+            self.queue_container,
+            height=150,
+            label_text="Queue Items"
+        )
+        self.queue_list_frame.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+        self.queue_list_frame.grid_columnconfigure(0, weight=1)
+
+        # Queue items will be added dynamically
+        self.queue_item_widgets = {}  # Maps item_id -> widget frame
+
+        # Queue control buttons
+        btn_frame = ctk.CTkFrame(self.queue_container, fg_color="transparent")
+        btn_frame.grid(row=1, column=0, padx=5, pady=5)
+
+        # Clear completed button
+        clear_completed_btn = ctk.CTkButton(
+            btn_frame,
+            text="Clear Completed",
+            command=self._clear_completed_queue,
+            width=120,
+            fg_color="gray40",
+            hover_color="gray30"
+        )
+        clear_completed_btn.pack(side="left", padx=5)
+
+        # Clear all button
+        clear_all_btn = ctk.CTkButton(
+            btn_frame,
+            text="Clear All",
+            command=self._clear_all_queue,
+            width=100,
+            fg_color="gray40",
+            hover_color="gray30"
+        )
+        clear_all_btn.pack(side="left", padx=5)
 
     def _create_output_section(self):
         """Create output configuration section."""
         output_frame = ctk.CTkFrame(self)
-        output_frame.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
+        output_frame.grid(row=3, column=0, padx=20, pady=10, sticky="ew")
         output_frame.grid_columnconfigure(1, weight=1)
         output_frame.grid_columnconfigure(3, weight=1)
 
@@ -185,7 +292,7 @@ class MainWindow(ctk.CTk):
     def _create_options_section(self):
         """Create processing options section."""
         options_frame = ctk.CTkFrame(self)
-        options_frame.grid(row=3, column=0, padx=20, pady=10, sticky="ew")
+        options_frame.grid(row=4, column=0, padx=20, pady=10, sticky="ew")
         options_frame.grid_columnconfigure(0, weight=1)
 
         # Section title with toggle button
@@ -453,7 +560,7 @@ class MainWindow(ctk.CTk):
     def _create_control_section(self):
         """Create control buttons section."""
         control_frame = ctk.CTkFrame(self, fg_color="transparent")
-        control_frame.grid(row=4, column=0, padx=20, pady=10, sticky="ew")
+        control_frame.grid(row=5, column=0, padx=20, pady=10, sticky="ew")
         control_frame.grid_columnconfigure(0, weight=1)
 
         # Buttons container
@@ -487,7 +594,7 @@ class MainWindow(ctk.CTk):
     def _create_progress_section(self):
         """Create progress section."""
         progress_frame = ctk.CTkFrame(self, fg_color="transparent")
-        progress_frame.grid(row=5, column=0, padx=20, pady=(0, 10), sticky="ew")
+        progress_frame.grid(row=6, column=0, padx=20, pady=(0, 10), sticky="ew")
         progress_frame.grid_columnconfigure(0, weight=1)
 
         # Progress bar
@@ -557,7 +664,7 @@ class MainWindow(ctk.CTk):
     def _create_status_bar(self):
         """Create status bar."""
         status_frame = ctk.CTkFrame(self, height=30, fg_color="gray20")
-        status_frame.grid(row=7, column=0, sticky="ew")
+        status_frame.grid(row=8, column=0, sticky="ew")
         status_frame.grid_columnconfigure(1, weight=1)
 
         # Ready indicator
@@ -572,7 +679,7 @@ class MainWindow(ctk.CTk):
         # Version info
         version_label = ctk.CTkLabel(
             status_frame,
-            text="Docling GUI v1.2.4",
+            text="Docling GUI v1.3.0",
             font=ctk.CTkFont(size=10),
             text_color="gray60"
         )
@@ -636,8 +743,246 @@ class MainWindow(ctk.CTk):
         else:
             messagebox.showerror("Error", f"Directory does not exist:\n{output_dir}")
 
+    # Queue Management Methods
+
+    def _toggle_queue(self):
+        """Toggle visibility of queue section."""
+        if self.queue_visible.get():
+            # Hide queue
+            self.queue_container.grid_remove()
+            self.queue_toggle_btn.configure(text="▶")
+            self.queue_visible.set(False)
+        else:
+            # Show queue
+            self.queue_container.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="ew")
+            self.queue_toggle_btn.configure(text="▼")
+            self.queue_visible.set(True)
+
+    def _add_files_to_queue(self):
+        """Add multiple files to the queue."""
+        filetypes = [
+            ("All Supported", "*.pdf *.docx *.pptx *.html *.htm *.jpg *.jpeg *.png *.md *.csv *.xlsx"),
+            ("PDF Files", "*.pdf"),
+            ("Word Documents", "*.docx"),
+            ("PowerPoint", "*.pptx"),
+            ("HTML Files", "*.html *.htm"),
+            ("Images", "*.jpg *.jpeg *.png *.gif *.bmp"),
+            ("All Files", "*.*")
+        ]
+
+        filenames = filedialog.askopenfilenames(
+            title="Select Files to Add to Queue",
+            filetypes=filetypes
+        )
+
+        if filenames:
+            added_items = self.queue.add_files(list(filenames))
+            self._log_console(f"Added {len(added_items)} file(s) to queue\n")
+
+            for item in added_items:
+                self._add_queue_item_widget(item)
+
+            self._update_queue_stats()
+
+            # Auto-expand queue if files were added
+            if not self.queue_visible.get():
+                self._toggle_queue()
+
+    def _add_folder_to_queue(self):
+        """Add all files from a folder to the queue."""
+        folder = filedialog.askdirectory(
+            title="Select Folder to Add to Queue"
+        )
+
+        if folder:
+            try:
+                added_items = self.queue.add_folder(folder, recursive=True)
+                self._log_console(f"Added {len(added_items)} file(s) from folder: {folder}\n")
+
+                for item in added_items:
+                    self._add_queue_item_widget(item)
+
+                self._update_queue_stats()
+
+                # Auto-expand queue if files were added
+                if not self.queue_visible.get():
+                    self._toggle_queue()
+
+            except Exception as e:
+                messagebox.showerror("Error", f"Could not add folder:\n{str(e)}")
+
+    def _add_queue_item_widget(self, item: QueueItem):
+        """Create and add a widget for a queue item."""
+        # Create item frame
+        item_frame = ctk.CTkFrame(self.queue_list_frame, fg_color="gray25")
+        item_frame.grid(row=len(self.queue_item_widgets), column=0, padx=5, pady=2, sticky="ew")
+        item_frame.grid_columnconfigure(2, weight=1)
+
+        # Status icon
+        status_label = ctk.CTkLabel(
+            item_frame,
+            text=item.get_status_icon(),
+            font=ctk.CTkFont(size=16),
+            text_color=item.get_status_color(),
+            width=30
+        )
+        status_label.grid(row=0, column=0, padx=5, pady=5)
+
+        # Filename
+        filename_label = ctk.CTkLabel(
+            item_frame,
+            text=item.filename,
+            anchor="w",
+            font=ctk.CTkFont(size=12)
+        )
+        filename_label.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+
+        # File size and format
+        info_label = ctk.CTkLabel(
+            item_frame,
+            text=f"{item.file_format.upper()} • {item.get_size_string()}",
+            font=ctk.CTkFont(size=10),
+            text_color="gray60"
+        )
+        info_label.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+
+        # Status text
+        status_text_label = ctk.CTkLabel(
+            item_frame,
+            text=item.status.value.capitalize(),
+            font=ctk.CTkFont(size=10),
+            text_color=item.get_status_color(),
+            width=80
+        )
+        status_text_label.grid(row=0, column=3, padx=5, pady=5)
+
+        # Remove button
+        remove_btn = ctk.CTkButton(
+            item_frame,
+            text="✕",
+            width=30,
+            height=24,
+            fg_color="gray40",
+            hover_color="gray30",
+            command=lambda: self._remove_queue_item(item.id)
+        )
+        remove_btn.grid(row=0, column=4, padx=5, pady=5)
+
+        # Store widget references
+        self.queue_item_widgets[item.id] = {
+            'frame': item_frame,
+            'status_icon': status_label,
+            'status_text': status_text_label
+        }
+
+    def _update_queue_item_widget(self, item: QueueItem):
+        """Update the widget for a queue item."""
+        if item.id in self.queue_item_widgets:
+            widgets = self.queue_item_widgets[item.id]
+            widgets['status_icon'].configure(
+                text=item.get_status_icon(),
+                text_color=item.get_status_color()
+            )
+            widgets['status_text'].configure(
+                text=item.status.value.capitalize(),
+                text_color=item.get_status_color()
+            )
+
+    def _remove_queue_item(self, item_id: str):
+        """Remove a specific item from the queue."""
+        if self.queue.remove_item(item_id):
+            # Remove widget
+            if item_id in self.queue_item_widgets:
+                self.queue_item_widgets[item_id]['frame'].destroy()
+                del self.queue_item_widgets[item_id]
+
+            self._update_queue_stats()
+            self._log_console(f"Removed item from queue\n")
+        else:
+            messagebox.showwarning("Warning", "Cannot remove item that is currently processing")
+
+    def _clear_completed_queue(self):
+        """Clear all completed and failed items from the queue."""
+        self.queue.clear_completed()
+
+        # Remove widgets
+        for item in list(self.queue_item_widgets.keys()):
+            if item not in [i.id for i in self.queue.items]:
+                self.queue_item_widgets[item]['frame'].destroy()
+                del self.queue_item_widgets[item]
+
+        self._update_queue_stats()
+        self._log_console("Cleared completed items from queue\n")
+
+    def _clear_all_queue(self):
+        """Clear all items from the queue."""
+        if len(self.queue) > 0:
+            if messagebox.askyesno("Confirm", "Clear all items from queue?"):
+                self.queue.clear_queue()
+
+                # Remove all widgets
+                for widgets in self.queue_item_widgets.values():
+                    widgets['frame'].destroy()
+                self.queue_item_widgets.clear()
+
+                self._update_queue_stats()
+                self._log_console("Cleared all items from queue\n")
+
+    def _update_queue_stats(self):
+        """Update queue statistics display."""
+        stats = self.queue.get_statistics()
+        total = stats['total']
+
+        if total == 0:
+            self.queue_stats_var.set("(0 files)")
+        else:
+            pending = stats['pending']
+            processing = stats['processing']
+            completed = stats['completed']
+            failed = stats['failed']
+
+            status_parts = []
+            if pending > 0:
+                status_parts.append(f"{pending} pending")
+            if processing > 0:
+                status_parts.append(f"{processing} processing")
+            if completed > 0:
+                status_parts.append(f"{completed} done")
+            if failed > 0:
+                status_parts.append(f"{failed} failed")
+
+            status_text = ", ".join(status_parts) if status_parts else "all complete"
+            self.queue_stats_var.set(f"({total} files: {status_text})")
+
+        # Update convert button text
+        self._update_convert_button_text()
+
+    def _update_convert_button_text(self):
+        """Update convert button text based on queue status."""
+        if len(self.queue) > 0:
+            stats = self.queue.get_statistics()
+            pending = stats['pending'] + stats['processing']
+            if pending > 0:
+                self.convert_btn.configure(text=f"Process Queue ({pending})")
+            else:
+                self.convert_btn.configure(text="Process Queue")
+        else:
+            self.convert_btn.configure(text="Convert")
+
     def _start_conversion(self):
-        """Start document conversion."""
+        """Start document conversion (single file or batch queue)."""
+        # Check if we should process queue or single file
+        if len(self.queue) > 0:
+            # Queue mode
+            self.queue_mode = True
+            self._process_queue()
+        else:
+            # Single file mode
+            self.queue_mode = False
+            self._process_single_file()
+
+    def _process_single_file(self):
+        """Process a single selected file."""
         # Validation
         if not self.selected_file:
             messagebox.showerror("Error", "Please select a file to convert.")
@@ -664,6 +1009,8 @@ class MainWindow(ctk.CTk):
         self.convert_btn.configure(state="disabled")
         self.cancel_btn.configure(state="normal")
         self.select_btn.configure(state="disabled")
+        self.add_files_btn.configure(state="disabled")
+        self.add_folder_btn.configure(state="disabled")
         self.progress_bar.start()
         self.status_var.set("Processing...")
         self.ready_label.configure(text="● Processing", text_color="orange")
@@ -680,13 +1027,7 @@ class MainWindow(ctk.CTk):
             # Check if models are downloaded for offline mode
             models_ok, missing_files = self.converter.check_models_downloaded(artifacts_path)
             if not models_ok:
-                self.is_processing = False
-                self.convert_btn.configure(state="normal")
-                self.cancel_btn.configure(state="disabled")
-                self.select_btn.configure(state="normal")
-                self.progress_bar.stop()
-                self.status_var.set("Ready")
-                self.ready_label.configure(text="● Ready", text_color="green")
+                self._reset_ui()
 
                 error_msg = "Offline Mode: Required models not found!\n\n"
                 error_msg += f"Missing files in {artifacts_path}:\n"
@@ -720,6 +1061,81 @@ class MainWindow(ctk.CTk):
             on_output=self._on_conversion_output,
             on_complete=self._on_conversion_complete,
             on_error=self._on_conversion_error
+        )
+
+    def _process_queue(self):
+        """Process the batch queue."""
+        # Get next pending item
+        next_item = self.queue.get_next_pending()
+        if not next_item:
+            # No more pending items
+            self._on_queue_complete()
+            return
+
+        # Validate output directory
+        output_dir = self.output_dir_var.get()
+        if not output_dir:
+            messagebox.showerror("Error", "Please select an output directory.")
+            return
+
+        # Create output directory if it doesn't exist
+        try:
+            Path(output_dir).mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            messagebox.showerror("Error", f"Could not create output directory:\n{str(e)}")
+            return
+
+        # Update queue item status
+        self.queue.update_status(next_item.id, QueueItemStatus.PROCESSING)
+        self.current_queue_item = next_item
+        self._update_queue_item_widget(next_item)
+        self._update_queue_stats()
+
+        # Update UI state
+        if not self.is_processing:
+            self.is_processing = True
+            self.convert_btn.configure(state="disabled")
+            self.cancel_btn.configure(state="normal")
+            self.select_btn.configure(state="disabled")
+            self.add_files_btn.configure(state="disabled")
+            self.add_folder_btn.configure(state="disabled")
+            self.progress_bar.start()
+            self.ready_label.configure(text="● Processing", text_color="orange")
+
+        # Update status
+        stats = self.queue.get_statistics()
+        current_index = stats['total'] - stats['pending']
+        total = stats['total']
+        self.status_var.set(f"Processing queue: {current_index}/{total} - {next_item.filename}")
+
+        self._log_console(f"\n{'='*60}\n")
+        self._log_console(f"Processing queue item {current_index}/{total}: {next_item.filename}\n")
+        self._log_console(f"{'='*60}\n")
+
+        # Get artifacts path for offline mode
+        artifacts_path = None
+        if self.processing_mode_var.get() == "offline":
+            artifacts_path = self.config.get("processing", "artifactsPath")
+
+        # Start conversion
+        self.converter.convert(
+            input_path=next_item.file_path,
+            output_format=self.output_format_var.get(),
+            output_dir=output_dir,
+            processing_mode=self.processing_mode_var.get(),
+            ocr_enabled=self.ocr_var.get(),
+            force_ocr=self.force_ocr_var.get(),
+            pipeline=self.pipeline_var.get(),
+            artifacts_path=artifacts_path,
+            ocr_lang=self.ocr_lang_var.get() if self.ocr_lang_var.get().strip() else None,
+            enrich_formula=self.enrich_formula_var.get(),
+            enrich_picture_classes=self.enrich_picture_classes_var.get(),
+            enrich_picture_description=self.enrich_picture_description_var.get(),
+            image_export_mode=self.image_export_mode_var.get(),
+            verbose=self.verbose_var.get(),
+            on_output=self._on_conversion_output,
+            on_complete=self._on_queue_item_complete,
+            on_error=self._on_queue_item_error
         )
 
     def _cancel_conversion(self):
@@ -885,16 +1301,83 @@ class MainWindow(ctk.CTk):
 
         self.after(0, update_ui)
 
+    def _on_queue_item_complete(self, return_code: int):
+        """Handle completion of a queue item."""
+        def update_ui():
+            if self.current_queue_item:
+                if return_code == 0:
+                    # Success
+                    self.queue.update_status(self.current_queue_item.id, QueueItemStatus.COMPLETED)
+                    self._log_console(f"\n[SUCCESS] Completed: {self.current_queue_item.filename}\n")
+                else:
+                    # Failed
+                    self.queue.update_status(self.current_queue_item.id, QueueItemStatus.FAILED,
+                                            f"Exit code: {return_code}")
+                    self._log_console(f"\n[FAILED] {self.current_queue_item.filename} (exit code: {return_code})\n")
+
+                # Update widget
+                self._update_queue_item_widget(self.current_queue_item)
+                self._update_queue_stats()
+
+            # Process next item in queue
+            self._process_queue()
+
+        self.after(0, update_ui)
+
+    def _on_queue_item_error(self, error: str):
+        """Handle error for a queue item."""
+        def update_ui():
+            if self.current_queue_item:
+                self.queue.update_status(self.current_queue_item.id, QueueItemStatus.FAILED, error)
+                self._log_console(f"\n[ERROR] {self.current_queue_item.filename}: {error}\n")
+                self._update_queue_item_widget(self.current_queue_item)
+                self._update_queue_stats()
+
+            # Process next item in queue
+            self._process_queue()
+
+        self.after(0, update_ui)
+
+    def _on_queue_complete(self):
+        """Handle completion of the entire queue."""
+        stats = self.queue.get_statistics()
+
+        self.status_var.set("Queue processing complete!")
+        self.ready_label.configure(text="● Complete", text_color="green")
+
+        self._log_console(f"\n{'='*60}\n")
+        self._log_console("[QUEUE COMPLETE]\n")
+        self._log_console(f"Total files processed: {stats['total']}\n")
+        self._log_console(f"Completed successfully: {stats['completed']}\n")
+        self._log_console(f"Failed: {stats['failed']}\n")
+        self._log_console(f"Output directory: {self.output_dir_var.get()}\n")
+        self._log_console(f"{'='*60}\n")
+
+        # Show completion dialog
+        if stats['failed'] > 0:
+            messagebox.showinfo("Queue Complete",
+                              f"Queue processing complete!\n\n"
+                              f"Successful: {stats['completed']}\n"
+                              f"Failed: {stats['failed']}\n\n"
+                              f"Check console for details.")
+        else:
+            messagebox.showinfo("Success",
+                              f"All {stats['completed']} files converted successfully!")
+
+        self._reset_ui()
+
     def _reset_ui(self):
         """Reset UI to ready state."""
         self.is_processing = False
         self.convert_btn.configure(state="normal")
         self.cancel_btn.configure(state="disabled")
         self.select_btn.configure(state="normal")
+        self.add_files_btn.configure(state="normal")
+        self.add_folder_btn.configure(state="normal")
         self.progress_bar.stop()
         self.progress_bar.set(0)
 
-        if self.status_var.get() not in ["Conversion completed successfully!", "Error occurred", "Conversion failed"]:
+        if self.status_var.get() not in ["Conversion completed successfully!", "Error occurred", "Conversion failed", "Queue processing complete!"]:
             self.status_var.set("Ready")
             self.ready_label.configure(text="● Ready", text_color="green")
 
