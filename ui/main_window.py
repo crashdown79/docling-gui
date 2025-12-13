@@ -1,4 +1,4 @@
-"""Main application window for Docling GUI v1.5.2."""
+"""Main application window for Docling GUI v1.5.5."""
 
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
@@ -14,20 +14,38 @@ from ui.sidebar import Sidebar
 from ui.queue_panel import QueuePanel
 from ui.console_panel import ConsolePanel
 
+# Try to import tkinterdnd2 for drag-and-drop support
+DND_AVAILABLE = False
+_TkinterDnD = None
+try:
+    from tkinterdnd2 import TkinterDnD
+    _TkinterDnD = TkinterDnD
+except ImportError:
+    pass
 
-class MainWindow(ctk.CTk):
+
+# Base window class - DnD availability determined at runtime
+BaseWindow = ctk.CTk
+
+
+class MainWindow(BaseWindow):
     """
     Main application window for Docling GUI.
 
     Features a two-panel layout:
     - Left: Sidebar with all conversion options
     - Right: Queue panel (top) and Console panel (bottom)
+
+    Supports drag-and-drop file addition when tkinterdnd2 is available.
     """
 
-    VERSION = "1.5.2"
+    VERSION = "1.5.5"
 
     def __init__(self):
         super().__init__()
+
+        # Try to enable drag-and-drop support
+        self._init_dnd()
 
         # Initialize components
         self.config = Config()
@@ -127,6 +145,23 @@ class MainWindow(ctk.CTk):
         )
         version_label.grid(row=0, column=2, padx=10, pady=5, sticky="e")
 
+    def _init_dnd(self):
+        """Initialize drag-and-drop support if available."""
+        global DND_AVAILABLE
+
+        if _TkinterDnD is None:
+            DND_AVAILABLE = False
+            return
+
+        try:
+            # Try to load the tkdnd library
+            self.TkdndVersion = _TkinterDnD._require(self)
+            DND_AVAILABLE = True
+        except (RuntimeError, Exception) as e:
+            # tkdnd native library not available
+            DND_AVAILABLE = False
+            print(f"Drag-and-drop not available: {e}")
+
     def _check_docling(self):
         """Check if Docling is installed."""
         if not self.converter.check_docling_installed():
@@ -137,6 +172,12 @@ class MainWindow(ctk.CTk):
             self.console_panel.append("WARNING: Docling CLI not found. Please install: pip install docling\n")
         else:
             self.console_panel.append(f"Using Docling: {self.converter.docling_path}\n")
+
+        # Log drag-and-drop status
+        if DND_AVAILABLE:
+            self.console_panel.append("Drag-and-drop: Enabled\n")
+        else:
+            self.console_panel.append("Drag-and-drop: Disabled (install tkinterdnd2 to enable)\n")
 
     # File/Queue Management
 
