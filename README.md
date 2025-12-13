@@ -393,10 +393,11 @@ For third-party library license information, see the "Credits" section.
 
 ## Credits
 
-- **Docling**: Document conversion engine by IBM Research and LF AI & Data Foundation
-- **CustomTkinter**: Modern UI framework by Tom Schimansky
-- **Python**: Programming language
-- **Gemini (Google)**: AI assistant for code generation and analysis
+- **[Docling](https://github.com/docling-project/docling)**: Document conversion engine by IBM Research and LF AI & Data Foundation
+- **[CustomTkinter](https://github.com/TomSchimansky/CustomTkinter)**: Modern UI framework by Tom Schimansky
+- **[Python](https://www.python.org/)**: Programming language
+- **[Gemini (Google)](https://gemini.google.com/)**: AI assistant for code generation and analysis
+- **[Claude (Anthropic)](https://www.anthropic.com/claude)**: AI assistant for code generation and analysis
 
 ## Version History
 
