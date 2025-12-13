@@ -1202,6 +1202,18 @@ class MainWindow(ctk.CTk):
                 messagebox.showerror("Models Required", error_msg)
                 return
 
+        # Check if OCR engine is available (if OCR is enabled)
+        if self.ocr_var.get():
+            ocr_engine = self.ocr_engine_var.get()
+            engine_available, error_msg = self.converter.check_ocr_engine_available(ocr_engine)
+            if not engine_available:
+                self._reset_ui()
+                messagebox.showerror(
+                    f"OCR Engine Not Available: {ocr_engine}",
+                    error_msg
+                )
+                return
+
         # Start conversion
         self.converter.convert(
             input_path=self.selected_file,
@@ -1285,6 +1297,26 @@ class MainWindow(ctk.CTk):
         artifacts_path = None
         if self.processing_mode_var.get() == "offline":
             artifacts_path = self.config.get("processing", "artifactsPath")
+
+        # Check if OCR engine is available (if OCR is enabled)
+        if self.ocr_var.get():
+            ocr_engine = self.ocr_engine_var.get()
+            engine_available, error_msg = self.converter.check_ocr_engine_available(ocr_engine)
+            if not engine_available:
+                # Mark current item as failed
+                self.queue.update_status(
+                    next_item.id,
+                    QueueItemStatus.FAILED,
+                    error_message=f"OCR engine '{ocr_engine}' not available"
+                )
+                self._update_queue_item_widget(next_item.id)
+
+                self._log_console(f"\n[ERROR] OCR Engine '{ocr_engine}' not available\n")
+                self._log_console(error_msg + "\n")
+
+                # Continue with next item in queue
+                self._process_queue()
+                return
 
         # Start conversion
         self.converter.convert(

@@ -86,6 +86,78 @@ class DoclingConverter:
 
         return (len(missing_models) == 0, missing_models)
 
+    def check_ocr_engine_available(self, engine: str) -> tuple[bool, str]:
+        """
+        Check if a specific OCR engine is available on the system.
+
+        Args:
+            engine: OCR engine name (auto, easyocr, tesseract, rapidocr, ocrmac, tesserocr)
+
+        Returns:
+            Tuple of (is_available: bool, error_message: str)
+        """
+        if engine == "auto" or engine == "easyocr":
+            # easyocr is Python-based and included with docling
+            return (True, "")
+
+        if engine == "tesseract":
+            # Check if tesseract command is available
+            if shutil.which('tesseract'):
+                return (True, "")
+            else:
+                return (False,
+                    "Tesseract is not installed.\n\n"
+                    "To install:\n"
+                    "  macOS: brew install tesseract\n"
+                    "  Ubuntu/Debian: sudo apt-get install tesseract-ocr\n"
+                    "  Windows: Download from https://github.com/UB-Mannheim/tesseract/wiki\n\n"
+                    "Or select a different OCR engine like 'easyocr' or 'rapidocr'.")
+
+        if engine == "tesserocr":
+            # Check if tesserocr Python package is available
+            try:
+                import tesserocr
+                return (True, "")
+            except ImportError:
+                return (False,
+                    "TesserOCR Python package is not installed.\n\n"
+                    "To install:\n"
+                    "  pip install tesserocr\n\n"
+                    "Note: tesserocr requires tesseract to be installed first.\n"
+                    "Or select a different OCR engine like 'easyocr' or 'rapidocr'.")
+
+        if engine == "rapidocr":
+            # Check if rapidocr Python package is available
+            try:
+                import rapidocr_onnxruntime
+                return (True, "")
+            except ImportError:
+                return (False,
+                    "RapidOCR is not installed.\n\n"
+                    "To install:\n"
+                    "  pip install rapidocr-onnxruntime\n\n"
+                    "Or select a different OCR engine like 'easyocr' or 'tesseract'.")
+
+        if engine == "ocrmac":
+            # ocrmac only works on macOS
+            if sys.platform != "darwin":
+                return (False,
+                    "OCRmac only works on macOS.\n\n"
+                    "Please select a different OCR engine like 'easyocr' or 'tesseract'.")
+            # Check if ocrmac package is available
+            try:
+                import ocrmac
+                return (True, "")
+            except ImportError:
+                return (False,
+                    "OCRmac is not installed.\n\n"
+                    "To install:\n"
+                    "  pip install ocrmac\n\n"
+                    "Or select a different OCR engine like 'easyocr' or 'tesseract'.")
+
+        # Unknown engine
+        return (True, "")  # Don't block unknown engines
+
     def build_command(
         self,
         input_path: str,
