@@ -2,7 +2,7 @@
 
 A user-friendly graphical interface for the [Docling](https://github.com/docling-project/docling) document converter. Convert PDFs, Word documents, PowerPoint presentations, HTML, images, and more to Markdown, JSON, HTML, or text formats with ease.
 
-![Docling GUI v1.5.2](docs/screenshot-v1.5.2.png)
+![screenshot](docs/screenshot-v1.5.2.png)
 
 ---
 
@@ -60,7 +60,7 @@ Collapsible debug section with 5 visualization toggles:
 
 ## Screenshot
 
-![Docling GUI v1.5.2 Interface](docs/screenshot-v1.5.2.png)
+![screenshot](docs/screenshot-v1.5.2.png)
 
 The new sidebar interface shows:
 - **Left Sidebar** with all conversion controls in collapsible sections
