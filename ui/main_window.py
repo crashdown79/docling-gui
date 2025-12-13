@@ -463,7 +463,7 @@ class MainWindow(BaseWindow):
         # Create dialog
         dialog = ctk.CTkToplevel(self)
         dialog.title("Download Models")
-        dialog.geometry("450x280")
+        dialog.geometry("450x380")
         dialog.transient(self)
         dialog.grab_set()
 
@@ -488,6 +488,8 @@ class MainWindow(BaseWindow):
         download_all_var = ctk.BooleanVar(value=True)
         download_smoldocling_var = ctk.BooleanVar(value=False)
         download_smolvlm_var = ctk.BooleanVar(value=False)
+        download_whisper_v3_var = ctk.BooleanVar(value=False)
+        download_whisper_v3_turbo_var = ctk.BooleanVar(value=False)
 
         ctk.CTkCheckBox(
             dialog,
@@ -510,11 +512,31 @@ class MainWindow(BaseWindow):
             font=ctk.CTkFont(size=12)
         ).pack(pady=5, padx=20, anchor="w")
 
+        ctk.CTkCheckBox(
+            dialog,
+            text="Whisper Large v3 (ASR model)",
+            variable=download_whisper_v3_var,
+            font=ctk.CTkFont(size=12)
+        ).pack(pady=5, padx=20, anchor="w")
+
+        ctk.CTkCheckBox(
+            dialog,
+            text="Whisper Large v3 Turbo (ASR model)",
+            variable=download_whisper_v3_turbo_var,
+            font=ctk.CTkFont(size=12)
+        ).pack(pady=5, padx=20, anchor="w")
+
         btn_frame = ctk.CTkFrame(dialog, fg_color="transparent")
         btn_frame.pack(pady=20)
 
         def start_download():
-            if not any([download_all_var.get(), download_smoldocling_var.get(), download_smolvlm_var.get()]):
+            if not any([
+                download_all_var.get(),
+                download_smoldocling_var.get(),
+                download_smolvlm_var.get(),
+                download_whisper_v3_var.get(),
+                download_whisper_v3_turbo_var.get()
+            ]):
                 messagebox.showwarning("No Selection", "Please select at least one model.")
                 return
 
@@ -530,6 +552,8 @@ class MainWindow(BaseWindow):
                 download_all=download_all_var.get(),
                 download_smoldocling=download_smoldocling_var.get(),
                 download_smolvlm=download_smolvlm_var.get(),
+                download_whisper_large_v3=download_whisper_v3_var.get(),
+                download_whisper_large_v3_turbo=download_whisper_v3_turbo_var.get(),
                 on_output=self._on_conversion_output,
                 on_complete=self._on_download_complete,
                 on_error=lambda err: messagebox.showerror("Download Error", err)

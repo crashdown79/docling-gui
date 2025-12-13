@@ -446,6 +446,8 @@ class DoclingConverter:
         download_all: bool = True,
         download_smoldocling: bool = False,
         download_smolvlm: bool = False,
+        download_whisper_large_v3: bool = False,
+        download_whisper_large_v3_turbo: bool = False,
         on_output: Optional[Callable[[str], None]] = None,
         on_complete: Optional[Callable[[int], None]] = None,
         on_error: Optional[Callable[[str], None]] = None
@@ -457,6 +459,8 @@ class DoclingConverter:
             download_all: If True, run 'docling-tools models download'
             download_smoldocling: If True, download SmolDocling model
             download_smolvlm: If True, download SmolVLM model
+            download_whisper_large_v3: If True, download Whisper Large v3 model
+            download_whisper_large_v3_turbo: If True, download Whisper Large v3 Turbo model
             on_output: Callback for stdout/stderr output
             on_complete: Callback for completion (receives return code)
             on_error: Callback for errors
@@ -563,6 +567,68 @@ class DoclingConverter:
                         total_return_code = return_code
                         if on_output:
                             on_output(f"\n[WARNING] SmolVLM download returned code {return_code}\n")
+
+                # Download Whisper Large v3 model
+                if download_whisper_large_v3:
+                    if on_output:
+                        on_output("\n" + "="*60 + "\n")
+                        on_output("Downloading Whisper Large v3 model...\n")
+                        on_output("="*60 + "\n")
+
+                    cmd = ["docling-tools", "models", "download-hf-repo", "openai/whisper-large-v3"]
+                    if on_output:
+                        on_output(f"Executing: {' '.join(cmd)}\n\n")
+
+                    self.current_process = subprocess.Popen(
+                        cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                        bufsize=1,
+                        universal_newlines=True
+                    )
+
+                    if self.current_process.stdout:
+                        for line in self.current_process.stdout:
+                            if on_output:
+                                on_output(line)
+
+                    return_code = self.current_process.wait()
+                    if return_code != 0:
+                        total_return_code = return_code
+                        if on_output:
+                            on_output(f"\n[WARNING] Whisper Large v3 download returned code {return_code}\n")
+
+                # Download Whisper Large v3 Turbo model
+                if download_whisper_large_v3_turbo:
+                    if on_output:
+                        on_output("\n" + "="*60 + "\n")
+                        on_output("Downloading Whisper Large v3 Turbo model...\n")
+                        on_output("="*60 + "\n")
+
+                    cmd = ["docling-tools", "models", "download-hf-repo", "openai/whisper-large-v3-turbo"]
+                    if on_output:
+                        on_output(f"Executing: {' '.join(cmd)}\n\n")
+
+                    self.current_process = subprocess.Popen(
+                        cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.STDOUT,
+                        text=True,
+                        bufsize=1,
+                        universal_newlines=True
+                    )
+
+                    if self.current_process.stdout:
+                        for line in self.current_process.stdout:
+                            if on_output:
+                                on_output(line)
+
+                    return_code = self.current_process.wait()
+                    if return_code != 0:
+                        total_return_code = return_code
+                        if on_output:
+                            on_output(f"\n[WARNING] Whisper Large v3 Turbo download returned code {return_code}\n")
 
                 if on_output:
                     on_output("\n" + "="*60 + "\n")
