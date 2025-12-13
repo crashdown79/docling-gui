@@ -5,6 +5,139 @@ All notable changes to the Docling GUI project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.5] - 2025-12-13
+
+### Added
+- **Drag-and-Drop File Support**: True drag-and-drop using tkinterdnd2 library
+  - Drop files or folders directly into the queue panel
+  - Visual feedback during drag operations (icon changes to 📥, background highlights)
+  - Cross-platform path parsing for Windows and macOS/Linux
+  - Graceful fallback to click-to-add when tkdnd native library unavailable
+  - DnD status shown in console on startup ("Drag-and-drop: Enabled/Disabled")
+
+- **Whisper ASR Model Downloads**: Two new model download options
+  - Whisper Large v3 (openai/whisper-large-v3) for ASR pipeline
+  - Whisper Large v3 Turbo (openai/whisper-large-v3-turbo) for faster ASR
+  - Model download dialog expanded to 450x380 to accommodate 5 options
+
+### Changed
+- Version updated to 1.5.5
+- Added `tkinterdnd2>=0.3.0` to requirements.txt
+- Download dialog now has 5 model options (was 3)
+
+### Technical
+- Added `DND_AVAILABLE` flag for runtime detection
+- Created `_DnDCTk` class combining CTk with TkinterDnD.DnDWrapper
+- Added `_init_dnd()` method for graceful DnD initialization
+- Added `_setup_dnd()` in FileDropZone for drop target registration
+- Added `_parse_dnd_data()` for cross-platform path parsing
+- Added `download_whisper_large_v3` and `download_whisper_large_v3_turbo` parameters
+
+### Notes
+- tkinterdnd2 requires compatible Tcl/Tk version
+- Python 3.14's Tcl/Tk may not be compatible with bundled tkdnd library
+- Falls back gracefully to click-to-add functionality
+
+---
+
+## [1.5.2] - 2025-12-13
+
+### Added
+- **Complete UI Redesign**: Two-panel sidebar layout
+  - Left sidebar with all conversion controls in collapsible sections
+  - Right panel with batch queue and console output
+  - Component-based modular architecture
+
+- **New Dropdown Controls**:
+  - OCR Engine dropdown (auto, easyocr, tesseract, tesserocr, rapidocr, ocrmac)
+  - OCR Language dropdown (18 languages with friendly names)
+  - PDF Backend dropdown (pypdfium2, dlparse_v1, dlparse_v2, dlparse_v4)
+  - Table Mode dropdown (fast, accurate)
+  - Image Export Mode dropdown (placeholder, embedded, referenced)
+
+- **New Features**:
+  - PDF Password field for protected documents
+  - Collapsible sections for Output, Processing, and Debug options
+  - Enhanced batch queue visualization with status indicators
+  - Clear Log button in console panel
+
+### Changed
+- Complete restructure of UI code into modular components
+- Version updated to 1.5.2
+- Window default size changed to 1200x900
+
+### New Files
+- `ui/sidebar.py` - Left sidebar with all controls
+- `ui/queue_panel.py` - Batch queue visualization
+- `ui/console_panel.py` - Console with Clear Log
+- `ui/widgets/collapsible_section.py` - Expandable sections
+- `ui/widgets/file_drop_zone.py` - File add zone
+- `ui/widgets/queue_item_widget.py` - Individual queue items
+
+---
+
+## [1.4.0] - 2025-12-13
+
+### Added
+- **OCR Engine Selection**: Choose from 6 OCR engines
+  - auto, easyocr, tesseract, tesserocr, rapidocr, ocrmac
+  - Pre-validation with helpful error messages if engine unavailable
+  - Installation instructions for missing dependencies
+
+- **VLM Model Selection**: Choose from 6 VLM models
+  - smoldocling, smoldocling_vllm, granite_vision
+  - granite_vision_vllm, granite_vision_ollama, got_ocr_2
+
+- **New Processing Options**:
+  - Extract Tables toggle
+  - Enrich Code toggle
+
+- **Advanced Debug & Visualization Section**: 5 toggles
+  - Show Layout Boxes
+  - Visualize Layout Clusters
+  - Visualize PDF Cells
+  - Visualize OCR Cells
+  - Visualize Table Cells
+
+### Fixed
+- TypeError with missing convert() parameters
+- AttributeError in queue widget updates
+
+### Changed
+- Version updated to 1.4.0
+- Better error handling in batch processing
+
+---
+
+## [1.3.0] - 2025-12-13
+
+### Added
+- **Batch Queue System**: Process multiple files sequentially
+  - Add multiple files via file dialog
+  - Add folders with recursive file scanning
+  - Per-file status tracking with color-coded icons
+  - Queue statistics (pending, processing, completed, failed)
+  - Clear Completed / Clear All buttons
+
+- **Queue Visualization**:
+  - Visual queue item display with status icons
+  - Individual item removal
+  - Sequential queue processing
+  - Queue completion summary
+
+### Changed
+- Version updated to 1.3.0
+- UI reorganized to accommodate queue panel
+- Convert button shows pending count
+
+### Technical
+- Added `core/queue.py` with ConversionQueue and QueueItem classes
+- Added QueueItemStatus enum (PENDING, PROCESSING, COMPLETED, FAILED, CANCELLED)
+- Added queue statistics tracking
+- Added `_process_next_in_queue()` for sequential processing
+
+---
+
 ## [1.2.4] - 2025-12-12
 
 ### Fixed
