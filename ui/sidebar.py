@@ -301,11 +301,11 @@ class Sidebar(ctk.CTkFrame):
         ).pack(side="left")
 
         # Pipeline dropdown
-        pipeline_frame = ctk.CTkFrame(content, fg_color="transparent")
-        pipeline_frame.pack(fill="x", pady=5)
+        self.pipeline_frame = ctk.CTkFrame(content, fg_color="transparent")
+        self.pipeline_frame.pack(fill="x", pady=5)
 
         ctk.CTkLabel(
-            pipeline_frame,
+            self.pipeline_frame,
             text="Pipeline:",
             font=ctk.CTkFont(size=12),
             width=80,
@@ -313,11 +313,34 @@ class Sidebar(ctk.CTkFrame):
         ).pack(side="left")
 
         ctk.CTkOptionMenu(
-            pipeline_frame,
+            self.pipeline_frame,
             variable=self.pipeline_var,
-            values=["standard", "vlm", "asr"],
-            width=150
+            values=self.config.get("models", "pipelines", default=["standard", "vlm", "asr"]),
+            width=150,
+            command=self._on_pipeline_change
         ).pack(side="left")
+
+        # VLM Model dropdown
+        self.vlm_model_frame = ctk.CTkFrame(content, fg_color="transparent")
+
+        ctk.CTkLabel(
+            self.vlm_model_frame,
+            text="VLM Model:",
+            font=ctk.CTkFont(size=12),
+            width=80,
+            anchor="w"
+        ).pack(side="left")
+
+        self.vlm_model_menu = ctk.CTkOptionMenu(
+            self.vlm_model_frame,
+            variable=self.vlm_model_var,
+            values=self.config.get("models", "vlm_models", default=["smoldocling"]),
+            width=150
+        )
+        self.vlm_model_menu.pack(side="left")
+
+        # Set initial visibility
+        self._on_pipeline_change(self.pipeline_var.get())
 
         # OCR Settings subsection
         ocr_label = ctk.CTkLabel(
@@ -361,7 +384,7 @@ class Sidebar(ctk.CTkFrame):
         ctk.CTkOptionMenu(
             engine_frame,
             variable=self.ocr_engine_var,
-            values=["auto", "easyocr", "tesseract", "tesserocr", "rapidocr", "ocrmac"],
+            values=self.config.get("models", "ocr_engines", default=["auto", "easyocr", "tesseract", "tesserocr", "rapidocr", "ocrmac"]),
             width=140
         ).pack(side="left")
 
@@ -378,7 +401,7 @@ class Sidebar(ctk.CTkFrame):
         ).pack(side="left")
 
         # Language options with display names
-        self._ocr_lang_options = {
+        self._ocr_lang_options = self.config.get("models", "ocr_languages", default={
             "English": "eng",
             "German": "deu",
             "French": "fra",
@@ -397,7 +420,7 @@ class Sidebar(ctk.CTkFrame):
             "Turkish": "tur",
             "Vietnamese": "vie",
             "Thai": "tha"
-        }
+        })
 
         # Get current language code and find display name
         current_code = self.ocr_lang_var.get()
@@ -687,6 +710,14 @@ class Sidebar(ctk.CTkFrame):
         if directory:
             self.output_dir_var.set(directory)
             self.config.set("general", "defaultOutputDir", value=directory)
+
+    def _on_pipeline_change(self, pipeline: str):
+        """Handle pipeline dropdown change."""
+        if pipeline == "vlm":
+            self.vlm_model_frame.pack(fill="x", pady=5, after=self.pipeline_frame)
+        else:
+            self.vlm_model_frame.pack_forget()
+
 
     def _on_ocr_lang_change(self, display_name: str):
         """Handle OCR language dropdown change."""

@@ -71,6 +71,32 @@ class Config:
             "window": {
                 "width": 1200,
                 "height": 900
+            },
+            "models": {
+                "pipelines": ["standard", "vlm", "asr"],
+                "ocr_engines": ["auto", "easyocr", "tesseract", "tesserocr", "rapidocr", "ocrmac"],
+                "ocr_languages": {
+                    "English": "eng",
+                    "German": "deu",
+                    "French": "fra",
+                    "Spanish": "spa",
+                    "Italian": "ita",
+                    "Portuguese": "por",
+                    "Dutch": "nld",
+                    "Polish": "pol",
+                    "Russian": "rus",
+                    "Chinese (Simplified)": "chi_sim",
+                    "Chinese (Traditional)": "chi_tra",
+                    "Japanese": "jpn",
+                    "Korean": "kor",
+                    "Arabic": "ara",
+                    "Hindi": "hin",
+                    "Turkish": "tur",
+                    "Vietnamese": "vie",
+                    "Thai": "tha"
+                },
+                "vlm_models": ["smoldocling", "smoldocling_vllm", "granite_vision", "granite_vision_vllm", "granite_vision_ollama", "got_ocr_2"],
+                "asr_models": ["whisper_tiny", "whisper_small", "whisper_medium", "whisper_base", "whisper_large", "whisper_flash", "whisper_turbo"]
             }
         }
 
