@@ -211,9 +211,18 @@ class DoclingConverter:
         table_mode: str = "accurate",
         artifacts_path: Optional[str] = None,
         ocr_lang: Optional[str] = None,
+        ocr_engine: str = "auto",
+        vlm_model: Optional[str] = None,
+        extract_tables: bool = True,
+        enrich_code: bool = False,
         enrich_formula: bool = False,
         enrich_picture_classes: bool = False,
         enrich_picture_description: bool = False,
+        show_layout: bool = False,
+        debug_visualize_layout: bool = False,
+        debug_visualize_cells: bool = False,
+        debug_visualize_ocr: bool = False,
+        debug_visualize_tables: bool = False,
         verbose: int = 0,
         on_output: Optional[Callable[[str], None]] = None,
         on_complete: Optional[Callable[[int], None]] = None,
@@ -234,9 +243,18 @@ class DoclingConverter:
             table_mode: Table extraction mode (accurate, fast)
             artifacts_path: Path to model artifacts (for offline mode)
             ocr_lang: OCR language codes (comma-separated, e.g., "eng,deu,fra")
+            ocr_engine: OCR engine (auto, easyocr, tesseract, rapidocr, ocrmac, tesserocr)
+            vlm_model: VLM model choice (for vlm pipeline)
+            extract_tables: Enable table extraction
+            enrich_code: Enable code enrichment
             enrich_formula: Enable formula enrichment
             enrich_picture_classes: Enable picture classification
             enrich_picture_description: Enable picture description
+            show_layout: Show layout bounding boxes
+            debug_visualize_layout: Visualize layout clusters
+            debug_visualize_cells: Visualize PDF cells
+            debug_visualize_ocr: Visualize OCR cells
+            debug_visualize_tables: Visualize table cells
             verbose: Verbosity level (0=normal, 1=-v, 2=-vv)
             on_output: Callback for stdout/stderr output
             on_complete: Callback for completion (receives return code)
@@ -260,9 +278,18 @@ class DoclingConverter:
             table_mode=table_mode,
             artifacts_path=artifacts_path if processing_mode == "offline" else None,
             ocr_lang=ocr_lang,
+            ocr_engine=ocr_engine,
+            vlm_model=vlm_model,
+            extract_tables=extract_tables,
+            enrich_code=enrich_code,
             enrich_formula=enrich_formula,
             enrich_picture_classes=enrich_picture_classes,
             enrich_picture_description=enrich_picture_description,
+            show_layout=show_layout,
+            debug_visualize_layout=debug_visualize_layout,
+            debug_visualize_cells=debug_visualize_cells,
+            debug_visualize_ocr=debug_visualize_ocr,
+            debug_visualize_tables=debug_visualize_tables,
             verbose=verbose
         )
 
