@@ -396,6 +396,7 @@ For third-party library license information, see the "Credits" section.
 - **Docling**: Document conversion engine by IBM Research and LF AI & Data Foundation
 - **CustomTkinter**: Modern UI framework by Tom Schimansky
 - **Python**: Programming language
+- **Gemini (Google)**: AI assistant for code generation and analysis
 
 ## Version History
 
