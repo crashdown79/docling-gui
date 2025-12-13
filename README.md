@@ -4,6 +4,14 @@ A user-friendly graphical interface for the [Docling](https://github.com/docling
 
 ![Docling GUI v1.5.2](docs/screenshot-v1.5.2.png)
 
+---
+
+## Disclaimer
+
+This project is a private hobby endeavor and is provided "as is," without any warranties of any kind, express or implied. The developer has no affiliation with Docling or any other third-party projects, tools, or libraries mentioned or used herein. Use at your own risk.
+
+---
+
 ## Features
 
 ### Current Version: v1.5.2
