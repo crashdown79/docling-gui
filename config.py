@@ -47,7 +47,7 @@ class Config:
                 "forceOcr": False,
                 "ocrEngine": "auto",
                 "ocrLanguages": "eng",
-                "vlmModel": "smoldocling",
+                "vlmModel": "granite_docling",
                 "imageExportMode": "embedded",
                 "tableMode": "accurate",
                 "pdfBackend": "dlparse_v2",
@@ -95,22 +95,75 @@ class Config:
                     "Vietnamese": "vie",
                     "Thai": "tha"
                 },
-                "vlm_models": ["smoldocling", "smoldocling_vllm", "granite_vision", "granite_vision_vllm", "granite_vision_ollama", "got_ocr_2"],
-                "asr_models": ["whisper_tiny", "whisper_small", "whisper_medium", "whisper_base", "whisper_large", "whisper_flash", "whisper_turbo"]
+                "vlm_models": ["granite_docling", "granite_docling_vllm", "smoldocling", "smoldocling_vllm", "granite_vision", "granite_vision_vllm", "granite_vision_ollama", "got_ocr_2"],
+                "asr_models": ["whisper_tiny", "whisper_small", "whisper_medium", "whisper_base", "whisper_large", "whisper_flash", "whisper_turbo"],
+                "downloadable_models": {
+                    "docling": {
+                        "title": "Docling Models",
+                        "command": "download",
+                        "models": [
+                            {"name": "layout", "description": "Layout analysis model"},
+                            {"name": "tableformer", "description": "Table structure recognition"},
+                            {"name": "code_formula", "description": "Code and formula detection"},
+                            {"name": "picture_classifier", "description": "Picture classification"},
+                            {"name": "smolvlm", "description": "SmolVLM vision-language model"},
+                            {"name": "granitedocling", "description": "Granite Docling model"},
+                            {"name": "granitedocling_mlx", "description": "Granite Docling (MLX/Apple Silicon)"},
+                            {"name": "smoldocling", "description": "SmolDocling model"},
+                            {"name": "smoldocling_mlx", "description": "SmolDocling (MLX/Apple Silicon)"},
+                            {"name": "granite_vision", "description": "Granite Vision model"},
+                            {"name": "rapidocr", "description": "RapidOCR engine"},
+                            {"name": "easyocr", "description": "EasyOCR engine"}
+                        ]
+                    },
+                    "huggingface": {
+                        "title": "Huggingface Models",
+                        "command": "download-hf-repo",
+                        "models": [
+                            {"name": "ds4sd/SmolDocling-256M-preview", "description": "SmolDocling 256M preview"},
+                            {"name": "HuggingFaceTB/SmolVLM-256M-Instruct", "description": "SmolVLM 256M Instruct"}
+                        ]
+                    }
+                }
             }
         }
 
+    def _merge_configs(self, default: Dict, saved: Dict) -> Dict:
+        """Recursively merge saved config into default config.
+
+        This ensures new default keys are added while preserving user settings.
+        For lists (like model lists), always use the default to get updates.
+        """
+        result = default.copy()
+        for key, value in saved.items():
+            if key in result:
+                if isinstance(result[key], dict) and isinstance(value, dict):
+                    result[key] = self._merge_configs(result[key], value)
+                elif isinstance(result[key], list):
+                    # For lists like model options, always use defaults to get updates
+                    pass
+                else:
+                    # Use saved value for non-dict, non-list values
+                    result[key] = value
+            else:
+                result[key] = value
+        return result
+
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration from file or create default."""
+        defaults = self._get_default_config()
         if self.config_file.exists():
             try:
                 with open(self.config_file, 'r') as f:
-                    return json.load(f)
+                    saved = json.load(f)
+                # Merge saved config with defaults to pick up new keys
+                merged = self._merge_configs(defaults, saved)
+                return merged
             except Exception as e:
                 print(f"Error loading config: {e}. Using defaults.")
-                return self._get_default_config()
+                return defaults
         else:
-            return self._get_default_config()
+            return defaults
 
     def save(self):
         """Save configuration to file."""

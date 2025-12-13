@@ -460,10 +460,13 @@ class MainWindow(BaseWindow):
             messagebox.showwarning("Busy", "Please wait for the current operation to complete.")
             return
 
+        # Get downloadable models from config (now a dict with sections)
+        downloadable_models = self.config.get("models", "downloadable_models", default={})
+
         # Create dialog
         dialog = ctk.CTkToplevel(self)
         dialog.title("Download Models")
-        dialog.geometry("450x380")
+        dialog.geometry("500x550")
         dialog.transient(self)
         dialog.grab_set()
 
@@ -485,75 +488,97 @@ class MainWindow(BaseWindow):
             font=ctk.CTkFont(size=11)
         ).pack(pady=10)
 
-        download_all_var = ctk.BooleanVar(value=True)
-        download_smoldocling_var = ctk.BooleanVar(value=False)
-        download_smolvlm_var = ctk.BooleanVar(value=False)
-        download_whisper_v3_var = ctk.BooleanVar(value=False)
-        download_whisper_v3_turbo_var = ctk.BooleanVar(value=False)
+        # Create scrollable frame for model checkboxes
+        scroll_frame = ctk.CTkScrollableFrame(dialog, height=320)
+        scroll_frame.pack(fill="x", padx=20, pady=10)
 
-        ctk.CTkCheckBox(
-            dialog,
-            text="All Standard Models",
-            variable=download_all_var,
-            font=ctk.CTkFont(size=12)
-        ).pack(pady=5, padx=20, anchor="w")
+        # Create checkbox variables for each model, organized by section
+        # Store as list of dicts: {"name": ..., "command": ..., "var": ...}
+        model_entries = []
 
-        ctk.CTkCheckBox(
-            dialog,
-            text="SmolDocling-256M (VLM model)",
-            variable=download_smoldocling_var,
-            font=ctk.CTkFont(size=12)
-        ).pack(pady=5, padx=20, anchor="w")
+        for section_key, section_data in downloadable_models.items():
+            section_title = section_data.get("title", section_key)
+            command = section_data.get("command", "download")
+            models = section_data.get("models", [])
 
-        ctk.CTkCheckBox(
-            dialog,
-            text="SmolVLM-256M-Instruct",
-            variable=download_smolvlm_var,
-            font=ctk.CTkFont(size=12)
-        ).pack(pady=5, padx=20, anchor="w")
+            # Section header
+            ctk.CTkLabel(
+                scroll_frame,
+                text=section_title,
+                font=ctk.CTkFont(size=13, weight="bold")
+            ).pack(pady=(10, 5), anchor="w")
 
-        ctk.CTkCheckBox(
-            dialog,
-            text="Whisper Large v3 (ASR model)",
-            variable=download_whisper_v3_var,
-            font=ctk.CTkFont(size=12)
-        ).pack(pady=5, padx=20, anchor="w")
+            # Model checkboxes for this section
+            for model in models:
+                var = ctk.BooleanVar(value=False)
+                model_entries.append({
+                    "name": model["name"],
+                    "command": command,
+                    "var": var
+                })
+                ctk.CTkCheckBox(
+                    scroll_frame,
+                    text=f"{model['name']} - {model['description']}",
+                    variable=var,
+                    font=ctk.CTkFont(size=12)
+                ).pack(pady=3, anchor="w", padx=(10, 0))
 
-        ctk.CTkCheckBox(
-            dialog,
-            text="Whisper Large v3 Turbo (ASR model)",
-            variable=download_whisper_v3_turbo_var,
-            font=ctk.CTkFont(size=12)
-        ).pack(pady=5, padx=20, anchor="w")
+        # Select/Deselect all buttons
+        select_frame = ctk.CTkFrame(dialog, fg_color="transparent")
+        select_frame.pack(pady=5)
+
+        def select_all():
+            for entry in model_entries:
+                entry["var"].set(True)
+
+        def deselect_all():
+            for entry in model_entries:
+                entry["var"].set(False)
+
+        ctk.CTkButton(
+            select_frame,
+            text="Select All",
+            command=select_all,
+            width=90,
+            height=28,
+            fg_color="gray35",
+            hover_color="gray30"
+        ).pack(side="left", padx=5)
+
+        ctk.CTkButton(
+            select_frame,
+            text="Deselect All",
+            command=deselect_all,
+            width=90,
+            height=28,
+            fg_color="gray35",
+            hover_color="gray30"
+        ).pack(side="left", padx=5)
 
         btn_frame = ctk.CTkFrame(dialog, fg_color="transparent")
         btn_frame.pack(pady=20)
 
         def start_download():
-            if not any([
-                download_all_var.get(),
-                download_smoldocling_var.get(),
-                download_smolvlm_var.get(),
-                download_whisper_v3_var.get(),
-                download_whisper_v3_turbo_var.get()
-            ]):
+            # Collect selected models with their commands
+            selected_models = [
+                {"name": entry["name"], "command": entry["command"]}
+                for entry in model_entries if entry["var"].get()
+            ]
+
+            if not selected_models:
                 messagebox.showwarning("No Selection", "Please select at least one model.")
                 return
 
             dialog.destroy()
             self.console_panel.append("\n" + "=" * 60 + "\n")
-            self.console_panel.append("Starting model download...\n")
+            self.console_panel.append(f"Starting download of {len(selected_models)} model(s)...\n")
             self.console_panel.append("=" * 60 + "\n")
 
             self._set_processing_state(True)
             self._ready_label.configure(text="Downloading models...", text_color="orange")
 
             self.converter.download_models(
-                download_all=download_all_var.get(),
-                download_smoldocling=download_smoldocling_var.get(),
-                download_smolvlm=download_smolvlm_var.get(),
-                download_whisper_large_v3=download_whisper_v3_var.get(),
-                download_whisper_large_v3_turbo=download_whisper_v3_turbo_var.get(),
+                models=selected_models,
                 on_output=self._on_conversion_output,
                 on_complete=self._on_download_complete,
                 on_error=lambda err: messagebox.showerror("Download Error", err)
