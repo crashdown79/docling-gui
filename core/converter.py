@@ -86,6 +86,78 @@ class DoclingConverter:
 
         return (len(missing_models) == 0, missing_models)
 
+    def check_ocr_engine_available(self, engine: str) -> tuple[bool, str]:
+        """
+        Check if a specific OCR engine is available on the system.
+
+        Args:
+            engine: OCR engine name (auto, easyocr, tesseract, rapidocr, ocrmac, tesserocr)
+
+        Returns:
+            Tuple of (is_available: bool, error_message: str)
+        """
+        if engine == "auto" or engine == "easyocr":
+            # easyocr is Python-based and included with docling
+            return (True, "")
+
+        if engine == "tesseract":
+            # Check if tesseract command is available
+            if shutil.which('tesseract'):
+                return (True, "")
+            else:
+                return (False,
+                    "Tesseract is not installed.\n\n"
+                    "To install:\n"
+                    "  macOS: brew install tesseract\n"
+                    "  Ubuntu/Debian: sudo apt-get install tesseract-ocr\n"
+                    "  Windows: Download from https://github.com/UB-Mannheim/tesseract/wiki\n\n"
+                    "Or select a different OCR engine like 'easyocr' or 'rapidocr'.")
+
+        if engine == "tesserocr":
+            # Check if tesserocr Python package is available
+            try:
+                import tesserocr
+                return (True, "")
+            except ImportError:
+                return (False,
+                    "TesserOCR Python package is not installed.\n\n"
+                    "To install:\n"
+                    "  pip install tesserocr\n\n"
+                    "Note: tesserocr requires tesseract to be installed first.\n"
+                    "Or select a different OCR engine like 'easyocr' or 'rapidocr'.")
+
+        if engine == "rapidocr":
+            # Check if rapidocr Python package is available
+            try:
+                import rapidocr_onnxruntime
+                return (True, "")
+            except ImportError:
+                return (False,
+                    "RapidOCR is not installed.\n\n"
+                    "To install:\n"
+                    "  pip install rapidocr-onnxruntime\n\n"
+                    "Or select a different OCR engine like 'easyocr' or 'tesseract'.")
+
+        if engine == "ocrmac":
+            # ocrmac only works on macOS
+            if sys.platform != "darwin":
+                return (False,
+                    "OCRmac only works on macOS.\n\n"
+                    "Please select a different OCR engine like 'easyocr' or 'tesseract'.")
+            # Check if ocrmac package is available
+            try:
+                import ocrmac
+                return (True, "")
+            except ImportError:
+                return (False,
+                    "OCRmac is not installed.\n\n"
+                    "To install:\n"
+                    "  pip install ocrmac\n\n"
+                    "Or select a different OCR engine like 'easyocr' or 'tesseract'.")
+
+        # Unknown engine
+        return (True, "")  # Don't block unknown engines
+
     def build_command(
         self,
         input_path: str,
@@ -99,9 +171,18 @@ class DoclingConverter:
         table_mode: str = "accurate",
         artifacts_path: Optional[str] = None,
         ocr_lang: Optional[str] = None,
+        ocr_engine: str = "auto",
+        vlm_model: Optional[str] = None,
+        extract_tables: bool = True,
+        enrich_code: bool = False,
         enrich_formula: bool = False,
         enrich_picture_classes: bool = False,
         enrich_picture_description: bool = False,
+        show_layout: bool = False,
+        debug_visualize_layout: bool = False,
+        debug_visualize_cells: bool = False,
+        debug_visualize_ocr: bool = False,
+        debug_visualize_tables: bool = False,
         verbose: int = 0,
         **kwargs
     ) -> List[str]:
@@ -116,6 +197,10 @@ class DoclingConverter:
         if pipeline != "standard":
             cmd.extend(["--pipeline", pipeline])
 
+        # VLM Model (when pipeline=vlm)
+        if pipeline == "vlm" and vlm_model:
+            cmd.extend(["--vlm-model", vlm_model])
+
         # OCR options
         if ocr_enabled:
             cmd.append("--ocr")
@@ -124,6 +209,10 @@ class DoclingConverter:
         else:
             cmd.append("--no-ocr")
 
+        # OCR engine
+        if ocr_engine and ocr_engine != "auto":
+            cmd.extend(["--ocr-engine", ocr_engine])
+
         # OCR language
         if ocr_lang and ocr_lang.strip():
             cmd.extend(["--ocr-lang", ocr_lang.strip()])
@@ -131,11 +220,17 @@ class DoclingConverter:
         # Image export mode
         cmd.extend(["--image-export-mode", image_export_mode])
 
-        # Table mode
+        # Table options
+        if not extract_tables:
+            cmd.append("--no-tables")
+
         if table_mode != "accurate":
             cmd.extend(["--table-mode", table_mode])
 
         # Enrichment options
+        if enrich_code:
+            cmd.append("--enrich-code")
+
         if enrich_formula:
             cmd.append("--enrich-formula")
 
@@ -144,6 +239,22 @@ class DoclingConverter:
 
         if enrich_picture_description:
             cmd.append("--enrich-picture-description")
+
+        # Debug visualization options
+        if show_layout:
+            cmd.append("--show-layout")
+
+        if debug_visualize_layout:
+            cmd.append("--debug-visualize-layout")
+
+        if debug_visualize_cells:
+            cmd.append("--debug-visualize-cells")
+
+        if debug_visualize_ocr:
+            cmd.append("--debug-visualize-ocr")
+
+        if debug_visualize_tables:
+            cmd.append("--debug-visualize-tables")
 
         # Verbose mode
         if verbose == 1:
@@ -172,9 +283,18 @@ class DoclingConverter:
         table_mode: str = "accurate",
         artifacts_path: Optional[str] = None,
         ocr_lang: Optional[str] = None,
+        ocr_engine: str = "auto",
+        vlm_model: Optional[str] = None,
+        extract_tables: bool = True,
+        enrich_code: bool = False,
         enrich_formula: bool = False,
         enrich_picture_classes: bool = False,
         enrich_picture_description: bool = False,
+        show_layout: bool = False,
+        debug_visualize_layout: bool = False,
+        debug_visualize_cells: bool = False,
+        debug_visualize_ocr: bool = False,
+        debug_visualize_tables: bool = False,
         verbose: int = 0,
         on_output: Optional[Callable[[str], None]] = None,
         on_complete: Optional[Callable[[int], None]] = None,
@@ -195,9 +315,18 @@ class DoclingConverter:
             table_mode: Table extraction mode (accurate, fast)
             artifacts_path: Path to model artifacts (for offline mode)
             ocr_lang: OCR language codes (comma-separated, e.g., "eng,deu,fra")
+            ocr_engine: OCR engine (auto, easyocr, tesseract, rapidocr, ocrmac, tesserocr)
+            vlm_model: VLM model choice (for vlm pipeline)
+            extract_tables: Enable table extraction
+            enrich_code: Enable code enrichment
             enrich_formula: Enable formula enrichment
             enrich_picture_classes: Enable picture classification
             enrich_picture_description: Enable picture description
+            show_layout: Show layout bounding boxes
+            debug_visualize_layout: Visualize layout clusters
+            debug_visualize_cells: Visualize PDF cells
+            debug_visualize_ocr: Visualize OCR cells
+            debug_visualize_tables: Visualize table cells
             verbose: Verbosity level (0=normal, 1=-v, 2=-vv)
             on_output: Callback for stdout/stderr output
             on_complete: Callback for completion (receives return code)
@@ -221,9 +350,18 @@ class DoclingConverter:
             table_mode=table_mode,
             artifacts_path=artifacts_path if processing_mode == "offline" else None,
             ocr_lang=ocr_lang,
+            ocr_engine=ocr_engine,
+            vlm_model=vlm_model,
+            extract_tables=extract_tables,
+            enrich_code=enrich_code,
             enrich_formula=enrich_formula,
             enrich_picture_classes=enrich_picture_classes,
             enrich_picture_description=enrich_picture_description,
+            show_layout=show_layout,
+            debug_visualize_layout=debug_visualize_layout,
+            debug_visualize_cells=debug_visualize_cells,
+            debug_visualize_ocr=debug_visualize_ocr,
+            debug_visualize_tables=debug_visualize_tables,
             verbose=verbose
         )
 
