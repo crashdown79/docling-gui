@@ -387,8 +387,9 @@ Or the theme will be adjustable in settings (future feature).
 
 ## License
 
-This project is a GUI wrapper for Docling. For Docling license information, see:
-https://github.com/docling-project/docling
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+For third-party library license information, see the "Credits" section.
 
 ## Credits
 
