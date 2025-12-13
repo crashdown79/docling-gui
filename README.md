@@ -2,11 +2,11 @@
 
 A user-friendly graphical interface for the [Docling](https://github.com/docling-project/docling) document converter. Convert PDFs, Word documents, PowerPoint presentations, HTML, images, and more to Markdown, JSON, HTML, or text formats with ease.
 
-![Docling GUI v1.4.0](docs/screenshot-v1.4.0.png)
+![Docling GUI v1.5.2](docs/screenshot-v1.5.2.png)
 
 ## Features
 
-### Current Version: v1.4.0
+### Current Version: v1.5.2
 
 #### Core Features
 - **Batch Queue Processing**: Add multiple files or entire folders for sequential processing
@@ -52,14 +52,16 @@ Collapsible debug section with 5 visualization toggles:
 
 ## Screenshot
 
-![Docling GUI v1.4.0 Interface](docs/screenshot-v1.4.0.png)
+![Docling GUI v1.5.2 Interface](docs/screenshot-v1.5.2.png)
 
-The interface shows:
-- **Batch Queue** with file management (add files, add folder, clear controls)
-- **Processing Options** section with mode, OCR, pipeline, and enrichment controls
-- **Advanced Debug & Visualization** collapsible section
-- **Console Output** with real-time processing logs
-- **Queue Statistics** showing processing progress
+The new sidebar interface shows:
+- **Left Sidebar** with all conversion controls in collapsible sections
+- **Add Files / Folder** buttons for batch queue management
+- **Output Configuration** section (format, output directory)
+- **Processing Options** with OCR engine, language, PDF backend, table mode
+- **Debug & Visualization** collapsible section
+- **Right Panel** with batch queue and console output
+- **Queue Statistics** with Clear Completed / Clear All buttons
 
 ## Requirements
 
@@ -210,19 +212,26 @@ The application remembers:
 
 ```
 docling-gui/
-├── main.py                 # Application entry point
-├── config.py              # Configuration management
-├── requirements.txt       # Python dependencies
-├── README.md             # This file
-├── CLAUDE.md             # Project guidance
-├── FRAMEWORK_ANALYSIS.md # Framework comparison
-├── FEATURE_ANALYSIS.md   # Feature specifications
+├── main.py                    # Application entry point
+├── config.py                  # Configuration management
+├── requirements.txt           # Python dependencies
+├── README.md                  # This file
+├── CLAUDE.md                  # Project guidance
 ├── core/
 │   ├── __init__.py
-│   └── converter.py      # Docling integration
+│   ├── converter.py           # Docling CLI integration
+│   └── queue.py               # Batch queue management
 └── ui/
     ├── __init__.py
-    └── main_window.py    # Main application window
+    ├── main_window.py         # Main window with two-panel layout
+    ├── sidebar.py             # Left sidebar with all controls
+    ├── queue_panel.py         # Batch queue visualization
+    ├── console_panel.py       # Console output with logging
+    └── widgets/               # Reusable UI components
+        ├── __init__.py
+        ├── collapsible_section.py
+        ├── file_drop_zone.py
+        └── queue_item_widget.py
 ```
 
 ## Troubleshooting
@@ -329,14 +338,23 @@ Or the theme will be adjustable in settings (future feature).
 - ✅ Advanced processing parameters
 - ✅ Table extraction and code enrichment
 
-### Phase 4: Polish & Enhancement (v1.5.0) - PLANNED
-- Sidebar layout restructure for better organization ([Issue #4](https://github.com/crashdown79/docling-gui/issues/4))
-- Configurable model download list ([Issue #2](https://github.com/crashdown79/docling-gui/issues/2))
+### ✅ Phase 4: UI Redesign (v1.5.x) - COMPLETED
+- ✅ Two-panel sidebar layout for better organization
+- ✅ Component-based modular architecture
+- ✅ OCR engine and language dropdowns
+- ✅ PDF backend and table mode selection
+- ✅ PDF password support for protected documents
+- ✅ Image export mode dropdown
+- ✅ Collapsible sections (Output, Processing, Debug)
+- ✅ Enhanced batch queue visualization
+
+### Phase 5: Future Enhancements - PLANNED
+- Drag & drop file support (tkinterdnd2)
 - Configuration profiles (save/load presets)
-- Window size/position persistence
 - Keyboard shortcuts
-- Drag & drop file support
 - Settings dialog
+- URL input support
+- File preview panel
 
 ## Support
 
@@ -372,7 +390,34 @@ https://github.com/docling-project/docling
 
 ## Version History
 
-### v1.4.0 - Advanced Debug & Visualization (Current)
+### v1.5.2 - UI Redesign with Sidebar Layout (Current)
+**Release Date:** 2025-12-13
+**Phase:** Phase 4 - UI Redesign
+
+**Major Changes:**
+- Complete UI redesign with two-panel sidebar layout
+- Component-based modular architecture
+- New widgets directory with reusable components
+
+**New Features:**
+- OCR Engine dropdown (auto, easyocr, tesseract, tesserocr, rapidocr, ocrmac)
+- OCR Language dropdown (18 languages with friendly names)
+- PDF Backend dropdown (pypdfium2, dlparse_v1, dlparse_v2, dlparse_v4)
+- Table Mode dropdown (fast, accurate)
+- Image Export Mode dropdown (placeholder, embedded, referenced)
+- PDF Password field for protected documents
+- Collapsible sections for Output, Processing, and Debug options
+- Enhanced batch queue visualization with status indicators
+
+**New Files:**
+- `ui/sidebar.py` - Left sidebar with all controls
+- `ui/queue_panel.py` - Batch queue visualization
+- `ui/console_panel.py` - Console with Clear Log
+- `ui/widgets/` - Reusable UI components
+
+---
+
+### v1.4.0 - Advanced Debug & Visualization
 **Release Date:** 2025-12-13
 **Phase:** Phase 3 - Advanced Options
 
