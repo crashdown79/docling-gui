@@ -2,51 +2,64 @@
 
 A user-friendly graphical interface for the [Docling](https://github.com/docling-project/docling) document converter. Convert PDFs, Word documents, PowerPoint presentations, HTML, images, and more to Markdown, JSON, HTML, or text formats with ease.
 
+![Docling GUI v1.4.0](docs/screenshot-v1.4.0.png)
+
 ## Features
 
-### MVP (Current Version)
+### Current Version: v1.4.0
 
-- **Simple File Selection**: Click to browse or drag-and-drop support (coming soon)
+#### Core Features
+- **Batch Queue Processing**: Add multiple files or entire folders for sequential processing
 - **Multiple Output Formats**: Markdown, JSON, HTML, HTML (split page), Text, Doctags
 - **Configurable Output**: Choose output directory with quick access to open folder
 - **Processing Modes**:
   - **Online Mode**: Default mode with automatic model downloads
-  - **Offline Mode**: Privacy-focused, uses local model artifacts
-- **OCR Support**:
-  - Enable/disable OCR (Optical Character Recognition)
-  - Force OCR to replace existing text
-- **Pipeline Selection**: Standard, VLM (Vision Language Model), ASR (Audio/Speech Recognition)
+  - **Offline Mode**: Privacy-focused, uses local model artifacts with pre-downloaded models
 - **Real-time Console Output**: See Docling's processing output in real-time
-- **Progress Tracking**: Visual feedback during conversion
-- **Error Handling**: Clear error messages and validation
+- **Progress Tracking**: Visual feedback during conversion with queue statistics
 - **Persistent Settings**: Remembers your preferences between sessions
+- **Log File Support**: Optionally save console output to log files
 
-## Screenshots
+#### OCR & Language Options
+- **OCR Engine Selection**: Choose from 6 OCR engines (auto, easyocr, tesseract, rapidocr, ocrmac, tesserocr)
+- **OCR Validation**: Pre-conversion checks with helpful installation instructions
+- **Enable/Disable OCR**: Toggle Optical Character Recognition on/off
+- **Force OCR**: Replace existing text with OCR output
+- **OCR Languages**: Specify language codes (e.g., "eng", "deu", "fra")
 
-```
-┌────────────────────────────────────────────────────────────┐
-│              Docling Document Converter                    │
-├────────────────────────────────────────────────────────────┤
-│  Input File:  document.pdf              [Select File]     │
-│  ┌──────────────────────────────────────────────────────┐ │
-│  │  📄 Drag & drop files here or use 'Select File'     │ │
-│  └──────────────────────────────────────────────────────┘ │
-│                                                            │
-│  Format: [Markdown ▼]  Output: /path/to/output [Browse]  │
-│                                                            │
-│  Mode: (•) Online ( ) Offline  ☑ Enable OCR              │
-│  Pipeline: [Standard ▼]                                   │
-│                                                            │
-│              [    Convert    ]  [Cancel]                  │
-│  Progress: [████████░░░░░░░░] Processing...              │
-│                                                            │
-│  Console Output:                                          │
-│  ┌──────────────────────────────────────────────────────┐ │
-│  │ [12:34:56] Starting conversion...                    │ │
-│  │ [12:34:57] Processing page 1/15...                   │ │
-│  └──────────────────────────────────────────────────────┘ │
-└────────────────────────────────────────────────────────────┘
-```
+#### Processing Pipelines
+- **Standard Pipeline**: General document processing (recommended)
+- **VLM Pipeline**: Vision Language Model for complex layouts
+  - **VLM Model Selection**: Choose from 6 VLM models (smoldocling, granite_vision, got_ocr_2, etc.)
+- **ASR Pipeline**: Audio/Speech Recognition for multimedia files
+
+#### Advanced Options
+- **Table Extraction**: Enable/disable table detection and extraction
+- **Code Enrichment**: Enable code block enhancement
+- **Formula Enrichment**: Improve mathematical formula detection
+- **Picture Classification**: Classify image types
+- **Picture Descriptions**: Generate image descriptions
+- **Image Export Modes**: Placeholder, Embedded, or Referenced
+- **Verbosity Control**: Adjust logging detail level (0, 1, 2)
+
+#### Debug & Visualization
+Collapsible debug section with 5 visualization toggles:
+- **Show Layout Boxes**: Display bounding boxes on page images
+- **Visualize Layout Clusters**: Debug layout detection
+- **Visualize PDF Cells**: Show raw PDF cell detection
+- **Visualize OCR Cells**: Show OCR cell detection
+- **Visualize Table Cells**: Show detailed table structure
+
+## Screenshot
+
+![Docling GUI v1.4.0 Interface](docs/screenshot-v1.4.0.png)
+
+The interface shows:
+- **Batch Queue** with file management (add files, add folder, clear controls)
+- **Processing Options** section with mode, OCR, pipeline, and enrichment controls
+- **Advanced Debug & Visualization** collapsible section
+- **Console Output** with real-time processing logs
+- **Queue Statistics** showing processing progress
 
 ## Requirements
 
@@ -297,22 +310,32 @@ Or the theme will be adjustable in settings (future feature).
 
 ## Roadmap
 
-### Phase 2: Batch Processing (Coming Soon)
-- Queue multiple files for batch conversion
-- Add folders recursively
-- Per-file status tracking
-- Batch progress overview
+### ✅ Phase 1: MVP (v1.0.0 - v1.2.x) - COMPLETED
+- Single file conversion
+- Basic options and settings
+- Online/offline modes
+- Real-time console output
 
-### Phase 3: Advanced Options (Coming Soon)
-- Full Docling parameter exposure
-- VLM/ASR model selection
-- Performance tuning options
-- Debug visualization
+### ✅ Phase 2: Batch Processing (v1.3.0) - COMPLETED
+- ✅ Queue multiple files for batch conversion
+- ✅ Add folders recursively
+- ✅ Per-file status tracking
+- ✅ Batch progress overview
 
-### Phase 4: Polish (Coming Soon)
+### ✅ Phase 3: Advanced Options (v1.4.0) - COMPLETED
+- ✅ OCR engine selection and validation
+- ✅ VLM model selection
+- ✅ Debug visualization options
+- ✅ Advanced processing parameters
+- ✅ Table extraction and code enrichment
+
+### Phase 4: Polish & Enhancement (v1.5.0) - PLANNED
+- Sidebar layout restructure for better organization ([Issue #4](https://github.com/crashdown79/docling-gui/issues/4))
+- Configurable model download list ([Issue #2](https://github.com/crashdown79/docling-gui/issues/2))
 - Configuration profiles (save/load presets)
-- Enhanced file preview with thumbnails
+- Window size/position persistence
 - Keyboard shortcuts
+- Drag & drop file support
 - Settings dialog
 
 ## Support
@@ -349,7 +372,56 @@ https://github.com/docling-project/docling
 
 ## Version History
 
-### v1.0.0 - MVP Release (Current)
+### v1.4.0 - Advanced Debug & Visualization (Current)
+**Release Date:** 2025-12-13
+**Phase:** Phase 3 - Advanced Options
+
+**New Features:**
+- OCR Engine selection (6 engines with availability validation)
+- VLM Model selection (6 model options)
+- Extract Tables toggle
+- Enrich Code toggle
+- Advanced Debug & Visualization section (5 toggles)
+
+**Improvements:**
+- OCR engine pre-validation with helpful error messages
+- Better error handling in batch processing
+- Installation instructions for missing dependencies
+
+**Bug Fixes:**
+- Fixed TypeError with missing convert() parameters
+- Fixed AttributeError in queue widget updates
+
+[Full Release Notes](https://github.com/crashdown79/docling-gui/releases/tag/v1.4.0)
+
+---
+
+### v1.3.0 - Batch Processing
+**Release Date:** 2025-12-13
+**Phase:** Phase 2 - Batch Processing
+
+**New Features:**
+- Batch queue system for multiple files
+- Add files and folders with recursive scanning
+- Per-file status tracking with color-coded icons
+- Queue statistics and management
+- Collapsible queue interface
+
+[Full Release Notes](https://github.com/crashdown79/docling-gui/releases/tag/v1.3.0)
+
+---
+
+### v1.2.x - Feature Enhancements
+- Image export mode selection
+- Verbose mode control
+- Model download functionality
+- Enrichment options (formulas, pictures)
+- Log file support
+- Offline mode validation and fixes
+
+---
+
+### v1.0.0 - MVP Release
 - Initial release with core features
 - Single file conversion
 - Online/offline processing modes
