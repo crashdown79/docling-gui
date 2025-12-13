@@ -6,10 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a GUI wrapper for the Docling command-line tool, which converts various document formats (PDF, DOCX, PPTX, HTML, images, etc.) to different output formats (Markdown, JSON, HTML, text).
 
-**Current Status**: v1.2.3 - Offline mode validation added
+**Current Status**: v1.5.1 - Major UI redesign with sidebar layout, OCR dropdowns
 **Framework**: Python + CustomTkinter
-**Architecture**: Modular design with core conversion logic and UI components separated
-**Latest Release**: Added offline mode model validation to prevent errors and provide helpful guidance
+**Architecture**: Component-based modular design with sidebar layout
+**Latest Release**: Complete UI overhaul with two-panel sidebar layout, enhanced batch queue visualization, and component-based architecture
 
 ## Target Platforms
 
@@ -102,79 +102,130 @@ docling /path/to/file.pdf --to md --output /output/dir --ocr --image-export-mode
 
 ## Current Implementation
 
-### Project Structure
+### Project Structure (v1.5.1)
 ```
 docling-gui/
-├── main.py                 # Application entry point
-├── config.py              # Configuration management (JSON-based)
-├── requirements.txt       # Dependencies (customtkinter, docling, Pillow)
+├── main.py                    # Application entry point
+├── config.py                  # Configuration management (JSON-based)
+├── requirements.txt           # Dependencies (customtkinter, docling, Pillow)
+├── DEVELOP_v1.5.0.md         # Development plan for v1.5.0
 ├── core/
 │   ├── __init__.py
-│   └── converter.py      # DoclingConverter class - handles Docling integration
+│   ├── converter.py          # DoclingConverter - handles Docling CLI integration
+│   └── queue.py              # ConversionQueue - batch queue management
 └── ui/
     ├── __init__.py
-    └── main_window.py    # MainWindow class - CustomTkinter UI
+    ├── main_window.py        # MainWindow - two-panel layout orchestration
+    ├── sidebar.py            # Sidebar - left panel with all controls
+    ├── queue_panel.py        # QueuePanel - batch queue visualization
+    ├── console_panel.py      # ConsolePanel - console output with logging
+    └── widgets/              # Reusable widget components
+        ├── __init__.py
+        ├── collapsible_section.py   # CollapsibleSection - expandable frames
+        ├── file_drop_zone.py        # FileDropZone - file add area
+        └── queue_item_widget.py     # QueueItemWidget - individual queue items
 ```
 
-### Features Implemented (v1.2.3)
-- ✅ File selection via dialog picker
-- ✅ Output format selection (all 6 formats)
-- ✅ Output directory selection with "Open Folder" button
-- ✅ Online/Offline processing mode toggle
-- ✅ OCR options (Enable OCR, Force OCR)
-- ✅ OCR language selection with preset buttons (v1.1.0)
-- ✅ Pipeline selection (Standard, VLM, ASR)
-- ✅ Enrichment options: Formulas, Picture Classes, Picture Descriptions (v1.1.0)
-- ✅ Image export mode selector: Dropdown with all 3 options (v1.2.0)
-- ✅ Verbose mode control: 0/1/2 for normal/-v/-vv logging (v1.2.0)
-- ✅ Model download button: Download models for offline operation (v1.2.0)
-- ✅ SmolVLM-256M-Instruct download: Third model option in download dialog (v1.2.1)
-- ✅ Collapsible options section: Toggle button to show/hide processing options (v1.2.1)
-- ✅ Console log to file: Save console output to timestamped log files (v1.2.2)
-- ✅ **Offline mode validation**: Checks if models are downloaded before conversion (NEW in v1.2.3)
-- ✅ Convert/Cancel buttons with state management
-- ✅ Real-time console output from Docling
-- ✅ Progress bar with indeterminate mode
-- ✅ Status indicators and user feedback
-- ✅ Error handling and validation
-- ✅ Persistent configuration (saves preferences)
+### Features Implemented (v1.5.1)
+
+**UI/UX Overhaul:**
+- ✅ Two-panel sidebar layout (sidebar + main area)
+- ✅ Component-based architecture (modular, maintainable code)
+- ✅ Collapsible sections (Output Config, Processing Options, Debug)
+- ✅ Visual batch queue with file status indicators
+- ✅ File drop zone with click-to-add functionality
+- ✅ Improved console panel with Clear Log button
+- ✅ Status bar with progress indicator
+
+**Batch Queue Processing:**
+- ✅ Add multiple files via dialog
+- ✅ Add folder with recursive file scanning
+- ✅ Visual queue item display with status icons
+- ✅ Individual item removal
+- ✅ Clear Completed / Clear All buttons
+- ✅ Sequential queue processing
+- ✅ Per-file status tracking (pending, processing, completed, failed)
+- ✅ Queue completion summary
+
+**Processing Options:**
+- ✅ Online/Offline mode selection
+- ✅ Pipeline selection (standard, vlm, asr)
+- ✅ OCR settings with language presets
+- ✅ Enrichment options: Formulas, Picture Classes, Picture Descriptions
+- ✅ Extract Tables option (NEW)
+- ✅ Enrich Code option (NEW)
+- ✅ Model download functionality
+
+**Debug & Visualization:**
+- ✅ Show Layout Boxes
+- ✅ Visualize Layout Clusters
+- ✅ Visualize PDF Cells
+- ✅ Visualize OCR Cells
+- ✅ Visualize Table Cells
+
+**Inherited Features (from v1.2.x):**
+- ✅ All output formats (md, json, html, html_split_page, text, doctags)
+- ✅ Console log to file with timestamps
+- ✅ Offline mode model validation
+- ✅ Persistent configuration
 - ✅ Window geometry persistence
 
 ### Not Yet Implemented (Future Phases)
-- ⏳ Drag-and-drop file support (UI placeholder exists)
-- ⏳ Batch queue processing
+- ⏳ True drag-and-drop support (requires tkinterdnd2)
 - ⏳ URL input support
-- ⏳ Advanced options panel (PDF backend, VLM/ASR models, enrichment, performance tuning, debug)
 - ⏳ File preview panel
-- ⏳ Configuration profiles
+- ⏳ Configuration profiles/presets
 - ⏳ Settings dialog/window
+- ⏳ Export to multiple formats simultaneously
 
-### Key Classes and Methods
+### Key Classes and Methods (v1.5.0)
 
 **config.py - Config**:
-- `__init__()`: Initialize config, load from JSON
 - `get(*keys, default)`: Get nested config value
 - `set(*keys, value)`: Set nested config value and save
-- `save()`: Persist config to JSON file
 
 **core/converter.py - DoclingConverter**:
 - `check_docling_installed()`: Verify Docling availability
-- `build_command(...)`: Construct Docling CLI command from parameters
-- `convert(...)`: Execute conversion in background thread with callbacks
+- `check_models_downloaded(artifacts_path)`: Check offline mode models
+- `build_command(...)`: Construct Docling CLI command
+- `convert(...)`: Execute conversion in background thread
+- `download_models(...)`: Download models for offline operation
 - `cancel()`: Terminate running conversion
 
+**core/queue.py - ConversionQueue**:
+- `add_file(path)` / `add_files(paths)`: Add files to queue
+- `add_folder(path, recursive)`: Add folder contents to queue
+- `get_next_pending()`: Get next item to process
+- `update_status(id, status)`: Update item status
+- `clear_completed()` / `clear_queue()`: Queue management
+- `get_statistics()`: Get queue stats (pending, completed, failed)
+
 **ui/main_window.py - MainWindow**:
-- `_create_widgets()`: Build entire UI layout
-- `_create_input_section()`: File selection UI
-- `_create_output_section()`: Format and directory selection
-- `_create_options_section()`: Processing options (mode, OCR, pipeline)
-- `_create_control_section()`: Convert/Cancel buttons
-- `_create_progress_section()`: Progress bar and status
-- `_create_console_section()`: Console output textbox
-- `_start_conversion()`: Validate inputs and start conversion
-- `_on_conversion_output(text)`: Handle stdout/stderr from Docling
-- `_on_conversion_complete(return_code)`: Handle completion
-- `_on_conversion_error(error)`: Handle errors
+- `_create_widgets()`: Build two-panel layout
+- `_add_files_to_queue()`: Handle file addition
+- `_start_conversion()`: Start queue processing
+- `_process_next_in_queue()`: Process queue items
+- `_on_queue_complete()`: Handle queue completion
+
+**ui/sidebar.py - Sidebar**:
+- `get_conversion_params()`: Get all conversion parameters
+- `set_processing_state(is_processing)`: Update UI state
+- `update_convert_button(text)`: Update button text
+
+**ui/queue_panel.py - QueuePanel**:
+- `add_item(item)` / `add_items(items)`: Add queue items
+- `update_item_status(id, status)`: Update item display
+- `refresh()`: Refresh entire queue display
+- `clear_completed()` / `clear_all()`: Queue management
+
+**ui/console_panel.py - ConsolePanel**:
+- `append(text)`: Add text to console
+- `clear()`: Clear console
+- `close()`: Close log file
+
+**ui/widgets/collapsible_section.py - CollapsibleSection**:
+- `toggle()` / `expand()` / `collapse()`: Control visibility
+- `content` property: Access content frame for child widgets
 
 ### Configuration File Location
 - **macOS**: `~/Library/Application Support/DoclingGUI/config.json`

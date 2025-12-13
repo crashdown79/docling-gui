@@ -168,6 +168,8 @@ class DoclingConverter:
         force_ocr: bool = False,
         pipeline: str = "standard",
         image_export_mode: str = "embedded",
+        pdf_backend: str = "dlparse_v4",
+        pdf_password: Optional[str] = None,
         table_mode: str = "accurate",
         artifacts_path: Optional[str] = None,
         ocr_lang: Optional[str] = None,
@@ -200,6 +202,14 @@ class DoclingConverter:
         # VLM Model (when pipeline=vlm)
         if pipeline == "vlm" and vlm_model:
             cmd.extend(["--vlm-model", vlm_model])
+
+        # PDF Backend
+        if pdf_backend and pdf_backend != "dlparse_v4":
+            cmd.extend(["--pdf-backend", pdf_backend])
+
+        # PDF Password (for protected documents)
+        if pdf_password:
+            cmd.extend(["--pdf-password", pdf_password])
 
         # OCR options
         if ocr_enabled:
@@ -280,6 +290,8 @@ class DoclingConverter:
         force_ocr: bool = False,
         pipeline: str = "standard",
         image_export_mode: str = "embedded",
+        pdf_backend: str = "dlparse_v4",
+        pdf_password: Optional[str] = None,
         table_mode: str = "accurate",
         artifacts_path: Optional[str] = None,
         ocr_lang: Optional[str] = None,
@@ -312,6 +324,8 @@ class DoclingConverter:
             force_ocr: Force OCR (replace existing text)
             pipeline: Processing pipeline (standard, vlm, asr)
             image_export_mode: Image handling (embedded, placeholder, referenced)
+            pdf_backend: PDF processing backend (dlparse_v4, dlparse_v2, dlparse_v1, pypdfium2)
+            pdf_password: Password for protected PDF documents
             table_mode: Table extraction mode (accurate, fast)
             artifacts_path: Path to model artifacts (for offline mode)
             ocr_lang: OCR language codes (comma-separated, e.g., "eng,deu,fra")
@@ -347,6 +361,8 @@ class DoclingConverter:
             force_ocr=force_ocr,
             pipeline=pipeline,
             image_export_mode=image_export_mode,
+            pdf_backend=pdf_backend,
+            pdf_password=pdf_password,
             table_mode=table_mode,
             artifacts_path=artifacts_path if processing_mode == "offline" else None,
             ocr_lang=ocr_lang,

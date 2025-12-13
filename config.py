@@ -26,7 +26,7 @@ class Config:
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default configuration."""
         return {
-            "version": "1.4.0",
+            "version": "1.5.2",
             "general": {
                 "defaultOutputDir": str(Path.home() / "Documents" / "docling_output"),
                 "useLastOutputDir": True,
@@ -65,10 +65,11 @@ class Config:
             },
             "interface": {
                 "theme": "dark",
-                "consoleFontSize": 10
+                "consoleFontSize": 10,
+                "sidebarWidth": 320
             },
             "window": {
-                "width": 900,
+                "width": 1200,
                 "height": 900
             }
         }
