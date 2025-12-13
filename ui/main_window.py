@@ -1309,7 +1309,7 @@ class MainWindow(ctk.CTk):
                     QueueItemStatus.FAILED,
                     error_message=f"OCR engine '{ocr_engine}' not available"
                 )
-                self._update_queue_item_widget(next_item.id)
+                self._update_queue_item_widget(next_item)
 
                 self._log_console(f"\n[ERROR] OCR Engine '{ocr_engine}' not available\n")
                 self._log_console(error_msg + "\n")
