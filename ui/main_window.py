@@ -526,6 +526,166 @@ class MainWindow(ctk.CTk):
         )
         download_btn.pack(side="left", padx=(0, 10))
 
+        # Row 4: Advanced Options (OCR Engine, VLM Model, Tables, Code)
+        advanced_frame = ctk.CTkFrame(self.opts_container, fg_color="transparent")
+        advanced_frame.grid(row=4, column=0, columnspan=4, padx=5, pady=5, sticky="w")
+
+        # OCR Engine
+        ocr_engine_frame = ctk.CTkFrame(advanced_frame, fg_color="transparent")
+        ocr_engine_frame.pack(side="left", padx=(0, 20))
+
+        ctk.CTkLabel(
+            ocr_engine_frame,
+            text="OCR Engine:",
+            font=ctk.CTkFont(weight="bold")
+        ).pack(side="left", padx=(0, 10))
+
+        default_ocr_engine = self.config.get("defaults", "ocrEngine", default="auto")
+        self.ocr_engine_var = ctk.StringVar(value=default_ocr_engine)
+        ocr_engine_menu = ctk.CTkOptionMenu(
+            ocr_engine_frame,
+            variable=self.ocr_engine_var,
+            values=["auto", "easyocr", "tesseract", "rapidocr", "ocrmac", "tesserocr"],
+            width=120
+        )
+        ocr_engine_menu.pack(side="left")
+
+        # VLM Model (when pipeline=vlm)
+        vlm_model_frame = ctk.CTkFrame(advanced_frame, fg_color="transparent")
+        vlm_model_frame.pack(side="left", padx=(0, 20))
+
+        ctk.CTkLabel(
+            vlm_model_frame,
+            text="VLM Model:",
+            font=ctk.CTkFont(weight="bold")
+        ).pack(side="left", padx=(0, 10))
+
+        default_vlm_model = self.config.get("defaults", "vlmModel", default="smoldocling")
+        self.vlm_model_var = ctk.StringVar(value=default_vlm_model)
+        vlm_model_menu = ctk.CTkOptionMenu(
+            vlm_model_frame,
+            variable=self.vlm_model_var,
+            values=["smoldocling", "smoldocling_vllm", "granite_vision", "granite_vision_vllm", "granite_vision_ollama", "got_ocr_2"],
+            width=150
+        )
+        vlm_model_menu.pack(side="left")
+
+        # Extract Tables
+        extract_tables = self.config.get("defaults", "extractTables", default=True)
+        self.extract_tables_var = ctk.BooleanVar(value=extract_tables)
+        ctk.CTkCheckBox(
+            advanced_frame,
+            text="Extract Tables",
+            variable=self.extract_tables_var
+        ).pack(side="left", padx=5)
+
+        # Enrich Code
+        enrich_code = self.config.get("defaults", "enrichCode", default=False)
+        self.enrich_code_var = ctk.BooleanVar(value=enrich_code)
+        ctk.CTkCheckBox(
+            advanced_frame,
+            text="Enrich Code",
+            variable=self.enrich_code_var
+        ).pack(side="left", padx=5)
+
+        # Row 5: Debug Visualization Section (Collapsible)
+        debug_section = ctk.CTkFrame(self.opts_container, fg_color="gray25")
+        debug_section.grid(row=5, column=0, columnspan=4, padx=5, pady=5, sticky="ew")
+
+        # Debug section title with toggle
+        debug_title_frame = ctk.CTkFrame(debug_section, fg_color="transparent")
+        debug_title_frame.pack(fill="x", padx=10, pady=5)
+
+        self.debug_visible = ctk.BooleanVar(value=False)  # Collapsed by default
+        self.debug_toggle_btn = ctk.CTkButton(
+            debug_title_frame,
+            text="▶",
+            width=30,
+            height=24,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            command=self._toggle_debug
+        )
+        self.debug_toggle_btn.pack(side="left", padx=(0, 10))
+
+        ctk.CTkLabel(
+            debug_title_frame,
+            text="Advanced Debug & Visualization",
+            font=ctk.CTkFont(size=13, weight="bold")
+        ).pack(side="left")
+
+        # Debug options container (collapsible)
+        self.debug_container = ctk.CTkFrame(debug_section, fg_color="transparent")
+        # Start hidden
+        # self.debug_container.pack(fill="x", padx=10, pady=(0, 10))
+
+        # Debug visualization toggles
+        debug_viz_frame = ctk.CTkFrame(self.debug_container, fg_color="transparent")
+        debug_viz_frame.pack(fill="x", pady=5)
+
+        ctk.CTkLabel(
+            debug_viz_frame,
+            text="Visualizations:",
+            font=ctk.CTkFont(weight="bold")
+        ).pack(side="left", padx=(0, 10))
+
+        # Show Layout
+        show_layout = self.config.get("defaults", "showLayout", default=False)
+        self.show_layout_var = ctk.BooleanVar(value=show_layout)
+        ctk.CTkCheckBox(
+            debug_viz_frame,
+            text="Show Layout Boxes",
+            variable=self.show_layout_var
+        ).pack(side="left", padx=5)
+
+        # Debug: Visualize Layout Clusters
+        debug_layout = self.config.get("defaults", "debugVisualizeLayout", default=False)
+        self.debug_visualize_layout_var = ctk.BooleanVar(value=debug_layout)
+        ctk.CTkCheckBox(
+            debug_viz_frame,
+            text="Layout Clusters",
+            variable=self.debug_visualize_layout_var
+        ).pack(side="left", padx=5)
+
+        # Debug: Visualize PDF Cells
+        debug_cells = self.config.get("defaults", "debugVisualizeCells", default=False)
+        self.debug_visualize_cells_var = ctk.BooleanVar(value=debug_cells)
+        ctk.CTkCheckBox(
+            debug_viz_frame,
+            text="PDF Cells",
+            variable=self.debug_visualize_cells_var
+        ).pack(side="left", padx=5)
+
+        # Debug: Visualize OCR Cells
+        debug_ocr = self.config.get("defaults", "debugVisualizeOcr", default=False)
+        self.debug_visualize_ocr_var = ctk.BooleanVar(value=debug_ocr)
+        ctk.CTkCheckBox(
+            debug_viz_frame,
+            text="OCR Cells",
+            variable=self.debug_visualize_ocr_var
+        ).pack(side="left", padx=5)
+
+        # Debug: Visualize Table Cells
+        debug_tables = self.config.get("defaults", "debugVisualizeTables", default=False)
+        self.debug_visualize_tables_var = ctk.BooleanVar(value=debug_tables)
+        ctk.CTkCheckBox(
+            debug_viz_frame,
+            text="Table Cells",
+            variable=self.debug_visualize_tables_var
+        ).pack(side="left", padx=5)
+
+    def _toggle_debug(self):
+        """Toggle visibility of debug options."""
+        if self.debug_visible.get():
+            # Hide debug options
+            self.debug_container.pack_forget()
+            self.debug_toggle_btn.configure(text="▶")
+            self.debug_visible.set(False)
+        else:
+            # Show debug options
+            self.debug_container.pack(fill="x", padx=10, pady=(0, 10))
+            self.debug_toggle_btn.configure(text="▼")
+            self.debug_visible.set(True)
+
     def _on_verbose_change(self, choice):
         """Handle verbose mode selection change."""
         # Extract the number from the choice string
@@ -679,7 +839,7 @@ class MainWindow(ctk.CTk):
         # Version info
         version_label = ctk.CTkLabel(
             status_frame,
-            text="Docling GUI v1.3.0",
+            text="Docling GUI v1.4.0",
             font=ctk.CTkFont(size=10),
             text_color="gray60"
         )
@@ -1053,10 +1213,19 @@ class MainWindow(ctk.CTk):
             pipeline=self.pipeline_var.get(),
             artifacts_path=artifacts_path,
             ocr_lang=self.ocr_lang_var.get() if self.ocr_lang_var.get().strip() else None,
+            ocr_engine=self.ocr_engine_var.get(),
+            vlm_model=self.vlm_model_var.get() if self.pipeline_var.get() == "vlm" else None,
+            extract_tables=self.extract_tables_var.get(),
+            enrich_code=self.enrich_code_var.get(),
             enrich_formula=self.enrich_formula_var.get(),
             enrich_picture_classes=self.enrich_picture_classes_var.get(),
             enrich_picture_description=self.enrich_picture_description_var.get(),
             image_export_mode=self.image_export_mode_var.get(),
+            show_layout=self.show_layout_var.get(),
+            debug_visualize_layout=self.debug_visualize_layout_var.get(),
+            debug_visualize_cells=self.debug_visualize_cells_var.get(),
+            debug_visualize_ocr=self.debug_visualize_ocr_var.get(),
+            debug_visualize_tables=self.debug_visualize_tables_var.get(),
             verbose=self.verbose_var.get(),
             on_output=self._on_conversion_output,
             on_complete=self._on_conversion_complete,
@@ -1128,10 +1297,19 @@ class MainWindow(ctk.CTk):
             pipeline=self.pipeline_var.get(),
             artifacts_path=artifacts_path,
             ocr_lang=self.ocr_lang_var.get() if self.ocr_lang_var.get().strip() else None,
+            ocr_engine=self.ocr_engine_var.get(),
+            vlm_model=self.vlm_model_var.get() if self.pipeline_var.get() == "vlm" else None,
+            extract_tables=self.extract_tables_var.get(),
+            enrich_code=self.enrich_code_var.get(),
             enrich_formula=self.enrich_formula_var.get(),
             enrich_picture_classes=self.enrich_picture_classes_var.get(),
             enrich_picture_description=self.enrich_picture_description_var.get(),
             image_export_mode=self.image_export_mode_var.get(),
+            show_layout=self.show_layout_var.get(),
+            debug_visualize_layout=self.debug_visualize_layout_var.get(),
+            debug_visualize_cells=self.debug_visualize_cells_var.get(),
+            debug_visualize_ocr=self.debug_visualize_ocr_var.get(),
+            debug_visualize_tables=self.debug_visualize_tables_var.get(),
             verbose=self.verbose_var.get(),
             on_output=self._on_conversion_output,
             on_complete=self._on_queue_item_complete,

@@ -99,9 +99,18 @@ class DoclingConverter:
         table_mode: str = "accurate",
         artifacts_path: Optional[str] = None,
         ocr_lang: Optional[str] = None,
+        ocr_engine: str = "auto",
+        vlm_model: Optional[str] = None,
+        extract_tables: bool = True,
+        enrich_code: bool = False,
         enrich_formula: bool = False,
         enrich_picture_classes: bool = False,
         enrich_picture_description: bool = False,
+        show_layout: bool = False,
+        debug_visualize_layout: bool = False,
+        debug_visualize_cells: bool = False,
+        debug_visualize_ocr: bool = False,
+        debug_visualize_tables: bool = False,
         verbose: int = 0,
         **kwargs
     ) -> List[str]:
@@ -116,6 +125,10 @@ class DoclingConverter:
         if pipeline != "standard":
             cmd.extend(["--pipeline", pipeline])
 
+        # VLM Model (when pipeline=vlm)
+        if pipeline == "vlm" and vlm_model:
+            cmd.extend(["--vlm-model", vlm_model])
+
         # OCR options
         if ocr_enabled:
             cmd.append("--ocr")
@@ -124,6 +137,10 @@ class DoclingConverter:
         else:
             cmd.append("--no-ocr")
 
+        # OCR engine
+        if ocr_engine and ocr_engine != "auto":
+            cmd.extend(["--ocr-engine", ocr_engine])
+
         # OCR language
         if ocr_lang and ocr_lang.strip():
             cmd.extend(["--ocr-lang", ocr_lang.strip()])
@@ -131,11 +148,17 @@ class DoclingConverter:
         # Image export mode
         cmd.extend(["--image-export-mode", image_export_mode])
 
-        # Table mode
+        # Table options
+        if not extract_tables:
+            cmd.append("--no-tables")
+
         if table_mode != "accurate":
             cmd.extend(["--table-mode", table_mode])
 
         # Enrichment options
+        if enrich_code:
+            cmd.append("--enrich-code")
+
         if enrich_formula:
             cmd.append("--enrich-formula")
 
@@ -144,6 +167,22 @@ class DoclingConverter:
 
         if enrich_picture_description:
             cmd.append("--enrich-picture-description")
+
+        # Debug visualization options
+        if show_layout:
+            cmd.append("--show-layout")
+
+        if debug_visualize_layout:
+            cmd.append("--debug-visualize-layout")
+
+        if debug_visualize_cells:
+            cmd.append("--debug-visualize-cells")
+
+        if debug_visualize_ocr:
+            cmd.append("--debug-visualize-ocr")
+
+        if debug_visualize_tables:
+            cmd.append("--debug-visualize-tables")
 
         # Verbose mode
         if verbose == 1:

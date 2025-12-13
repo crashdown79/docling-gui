@@ -26,7 +26,7 @@ class Config:
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default configuration."""
         return {
-            "version": "1.3.0",
+            "version": "1.4.0",
             "general": {
                 "defaultOutputDir": str(Path.home() / "Documents" / "docling_output"),
                 "useLastOutputDir": True,
@@ -45,14 +45,22 @@ class Config:
                 "pipeline": "standard",
                 "ocrEnabled": True,
                 "forceOcr": False,
-                "ocrEngine": "easyocr",
+                "ocrEngine": "auto",
                 "ocrLanguages": "eng",
+                "vlmModel": "smoldocling",
                 "imageExportMode": "embedded",
                 "tableMode": "accurate",
                 "pdfBackend": "dlparse_v2",
+                "extractTables": True,
+                "enrichCode": False,
                 "enrichFormula": False,
                 "enrichPictureClasses": False,
                 "enrichPictureDescription": False,
+                "showLayout": False,
+                "debugVisualizeLayout": False,
+                "debugVisualizeCells": False,
+                "debugVisualizeOcr": False,
+                "debugVisualizeTables": False,
                 "verbose": 0
             },
             "interface": {
