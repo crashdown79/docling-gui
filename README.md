@@ -14,9 +14,10 @@ This project is a private hobby endeavor and is provided "as is," without any wa
 
 ## Features
 
-### Current Version: v1.5.2
+### Current Version: v1.5.5
 
 #### Core Features
+- **Drag-and-Drop Support**: Drag files directly into the queue (requires tkinterdnd2)
 - **Batch Queue Processing**: Add multiple files or entire folders for sequential processing
 - **Multiple Output Formats**: Markdown, JSON, HTML, HTML (split page), Text, Doctags
 - **Configurable Output**: Choose output directory with quick access to open folder
@@ -356,8 +357,8 @@ Or the theme will be adjustable in settings (future feature).
 - ✅ Collapsible sections (Output, Processing, Debug)
 - ✅ Enhanced batch queue visualization
 
-### Phase 5: Future Enhancements - PLANNED
-- Drag & drop file support (tkinterdnd2)
+### Phase 5: Future Enhancements - IN PROGRESS
+- ✅ Drag & drop file support (tkinterdnd2)
 - Configuration profiles (save/load presets)
 - Keyboard shortcuts
 - Settings dialog
@@ -401,7 +402,26 @@ For third-party library license information, see the "Credits" section.
 
 ## Version History
 
-### v1.5.2 - UI Redesign with Sidebar Layout (Current)
+### v1.5.5 - Drag-and-Drop Support (Current)
+**Release Date:** 2025-12-13
+**Phase:** Phase 5 - Future Enhancements
+
+**New Features:**
+- **Drag-and-drop file support** using tkinterdnd2 library
+- Drop files or folders directly into the queue panel
+- Visual feedback during drag operations (icon and color change)
+- Cross-platform path parsing for Windows and macOS/Linux
+- Graceful fallback to click-to-add when tkdnd unavailable
+- DnD status shown in console on startup
+
+**Technical Notes:**
+- Requires `tkinterdnd2` package (included in requirements.txt)
+- Native tkdnd library compatibility varies by Python/Tcl version
+- Falls back gracefully if native library not available
+
+---
+
+### v1.5.2 - UI Redesign with Sidebar Layout
 **Release Date:** 2025-12-13
 **Phase:** Phase 4 - UI Redesign
 
@@ -488,12 +508,11 @@ For third-party library license information, see the "Credits" section.
 ## Contributing
 
 Contributions welcome! Areas for improvement:
-- Drag-and-drop file support
-- Batch processing queue
-- Advanced options panel
-- Configuration profiles
+- Configuration profiles (save/load presets)
 - Unit tests
 - Platform-specific packaging
+- Keyboard shortcuts
+- Settings dialog
 
 ## Contact
 
