@@ -1,4 +1,4 @@
-"""Main application window for Docling GUI v1.5.5."""
+"""Main application window for Docling GUI."""
 
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
@@ -39,8 +39,6 @@ class MainWindow(BaseWindow):
     Supports drag-and-drop file addition when tkinterdnd2 is available.
     """
 
-    VERSION = "1.5.6"
-
     def __init__(self):
         super().__init__()
 
@@ -52,8 +50,11 @@ class MainWindow(BaseWindow):
         self.converter = DoclingConverter()
         self.queue = ConversionQueue()
 
+        # Get version from config (single source of truth)
+        self.version = self.config.get("version", default="1.0.0")
+
         # Window setup
-        self.title(f"Docling GUI v{self.VERSION} - Document Converter")
+        self.title(f"Docling GUI v{self.version} - Document Converter")
         width = self.config.get("window", "width", default=1200)
         height = self.config.get("window", "height", default=900)
         self.geometry(f"{width}x{height}")
@@ -139,7 +140,7 @@ class MainWindow(BaseWindow):
         # Version info
         version_label = ctk.CTkLabel(
             status_frame,
-            text=f"v{self.VERSION}",
+            text=f"v{self.version}",
             font=ctk.CTkFont(size=10),
             text_color="gray60"
         )

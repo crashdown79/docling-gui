@@ -51,6 +51,9 @@ class Sidebar(ctk.CTkFrame):
         # State variables (BooleanVar, StringVar, etc.)
         self._create_variables()
 
+        # Set up auto-save traces for all variables
+        self._setup_variable_traces()
+
         # Create UI
         self._create_widgets()
 
@@ -148,6 +151,49 @@ class Sidebar(ctk.CTkFrame):
         self.debug_visualize_tables_var = ctk.BooleanVar(
             value=self.config.get("defaults", "debugVisualizeTables", default=False)
         )
+
+    def _setup_variable_traces(self):
+        """Set up traces to auto-save settings when variables change."""
+        # Define mapping of variables to config paths
+        variable_config_map = [
+            # (variable, config_keys...)
+            (self.output_format_var, "general", "defaultOutputFormat"),
+            (self.output_dir_var, "general", "defaultOutputDir"),
+            (self.processing_mode_var, "processing", "mode"),
+            (self.pipeline_var, "defaults", "pipeline"),
+            (self.ocr_var, "defaults", "ocrEnabled"),
+            (self.force_ocr_var, "defaults", "forceOcr"),
+            (self.ocr_lang_var, "defaults", "ocrLanguages"),
+            (self.ocr_engine_var, "defaults", "ocrEngine"),
+            (self.vlm_model_var, "defaults", "vlmModel"),
+            (self.image_export_mode_var, "defaults", "imageExportMode"),
+            (self.pdf_backend_var, "defaults", "pdfBackend"),
+            (self.pdf_password_var, "defaults", "pdfPassword"),
+            (self.table_mode_var, "defaults", "tableMode"),
+            (self.verbose_var, "defaults", "verbose"),
+            (self.enrich_formula_var, "defaults", "enrichFormula"),
+            (self.enrich_picture_classes_var, "defaults", "enrichPictureClasses"),
+            (self.enrich_picture_description_var, "defaults", "enrichPictureDescription"),
+            (self.extract_tables_var, "defaults", "extractTables"),
+            (self.enrich_code_var, "defaults", "enrichCode"),
+            (self.show_layout_var, "defaults", "showLayout"),
+            (self.debug_visualize_layout_var, "defaults", "debugVisualizeLayout"),
+            (self.debug_visualize_cells_var, "defaults", "debugVisualizeCells"),
+            (self.debug_visualize_ocr_var, "defaults", "debugVisualizeOcr"),
+            (self.debug_visualize_tables_var, "defaults", "debugVisualizeTables"),
+        ]
+
+        # Add trace to each variable
+        for mapping in variable_config_map:
+            var = mapping[0]
+            config_keys = mapping[1:]
+            # Create a closure to capture config_keys for each variable
+            var.trace_add("write", lambda *args, keys=config_keys, v=var: self._on_setting_change(v, *keys))
+
+    def _on_setting_change(self, var, *config_keys):
+        """Save setting to config when variable changes."""
+        value = var.get()
+        self.config.set(*config_keys, value=value)
 
     def _create_widgets(self):
         """Create sidebar widgets."""
