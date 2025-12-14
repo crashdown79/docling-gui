@@ -39,7 +39,7 @@ class MainWindow(BaseWindow):
     Supports drag-and-drop file addition when tkinterdnd2 is available.
     """
 
-    VERSION = "1.5.5"
+    VERSION = "1.5.6"
 
     def __init__(self):
         super().__init__()

@@ -1,6 +1,7 @@
 """Sidebar component with all conversion options."""
 
 import customtkinter as ctk
+from tkinter import messagebox
 from typing import Callable, Optional, Dict, Any
 from config import Config
 from ui.widgets import CollapsibleSection
@@ -641,6 +642,38 @@ class Sidebar(ctk.CTkFrame):
             variable=self.debug_visualize_tables_var,
             font=ctk.CTkFont(size=11)
         ).pack(anchor="w", pady=2)
+
+        # Reset Settings button
+        ctk.CTkButton(
+            content,
+            text="🗑 Reset All Settings",
+            command=self._reset_settings,
+            height=28,
+            font=ctk.CTkFont(size=11),
+            fg_color="#8b0000",
+            hover_color="#a52a2a"
+        ).pack(fill="x", pady=(15, 5))
+
+    def _reset_settings(self):
+        """Reset all settings by deleting config.json."""
+        if messagebox.askyesno(
+            "Reset Settings",
+            "This will delete all your settings and restore defaults.\n\n"
+            "The application will close and you'll need to restart it.\n\n"
+            "Are you sure you want to continue?"
+        ):
+            try:
+                config_file = self.config.config_file
+                if config_file.exists():
+                    config_file.unlink()
+                messagebox.showinfo(
+                    "Settings Reset",
+                    "Settings have been reset.\n\nPlease restart the application."
+                )
+                # Close the application
+                self.winfo_toplevel().destroy()
+            except Exception as e:
+                messagebox.showerror("Error", f"Could not reset settings:\n{str(e)}")
 
     def _create_control_buttons(self):
         """Create convert/cancel buttons."""

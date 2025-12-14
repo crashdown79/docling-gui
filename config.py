@@ -26,7 +26,7 @@ class Config:
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default configuration."""
         return {
-            "version": "1.5.5",
+            "version": "1.5.6",
             "general": {
                 "defaultOutputDir": str(Path.home() / "Documents" / "docling_output"),
                 "useLastOutputDir": True,
