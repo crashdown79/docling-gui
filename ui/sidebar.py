@@ -157,9 +157,10 @@ class Sidebar(ctk.CTkFrame):
         title_frame = ctk.CTkFrame(self, fg_color="transparent")
         title_frame.grid(row=0, column=0, padx=15, pady=(15, 10), sticky="ew")
 
+        version = self.config.get("version", default="1.5.5")
         ctk.CTkLabel(
             title_frame,
-            text="Docling Converter 1.5.2",
+            text=f"Docling Converter {version}",
             font=ctk.CTkFont(size=16, weight="bold")
         ).pack(side="left")
 
