@@ -65,3 +65,7 @@ Desktop.ini
 
 # Claude Code
 .claude/
+
+# AI Assistant Instructions (local only)
+CLAUDE.md
+gemini.md
