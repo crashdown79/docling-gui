@@ -96,7 +96,8 @@ class ConsolePanel(ctk.CTkFrame):
         self._console_text.grid(row=1, column=0, padx=10, pady=(0, 10), sticky="nsew")
 
         # Welcome message
-        self.append("Docling GUI v1.5.2 initialized.\nReady to convert documents.\n")
+        version = self.config.get("version", default="1.5.7-beta")
+        self.append(f"Docling GUI v{version} initialized.\nReady to convert documents.\n")
 
     def append(self, text: str):
         """
