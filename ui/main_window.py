@@ -582,7 +582,8 @@ class MainWindow(BaseWindow):
                 models=selected_models,
                 on_output=self._on_conversion_output,
                 on_complete=self._on_download_complete,
-                on_error=lambda err: messagebox.showerror("Download Error", err)
+                on_error=lambda err: messagebox.showerror("Download Error", err),
+                artifacts_path=self.config.get("processing", "artifactsPath")
             )
 
         ctk.CTkButton(

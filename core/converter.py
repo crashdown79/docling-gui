@@ -446,7 +446,8 @@ class DoclingConverter:
         models: List[dict],
         on_output: Optional[Callable[[str], None]] = None,
         on_complete: Optional[Callable[[int], None]] = None,
-        on_error: Optional[Callable[[str], None]] = None
+        on_error: Optional[Callable[[str], None]] = None,
+        artifacts_path: Optional[str] = None
     ):
         """
         Download models for offline operation.
@@ -483,6 +484,10 @@ class DoclingConverter:
                         on_output("="*60 + "\n")
 
                     cmd = ["docling-tools", "models", command, model_name]
+                    if artifacts_path and command == "download":
+                        from pathlib import Path
+                        output_dir = str(Path(artifacts_path) / "models")
+                        cmd.extend(["--output-dir", output_dir])
                     if on_output:
                         on_output(f"Executing: {' '.join(cmd)}\n\n")
 

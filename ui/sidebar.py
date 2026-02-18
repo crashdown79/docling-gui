@@ -73,6 +73,12 @@ class Sidebar(ctk.CTkFrame):
             value=self.config.get("processing", "mode", default="online")
         )
 
+        # Artifacts Path
+        self.artifacts_path_var = ctk.StringVar(
+            value=self.config.get("processing", "artifactsPath",
+                                  default=str(__import__('pathlib').Path.home() / ".cache" / "docling"))
+        )
+
         # Pipeline
         self.pipeline_var = ctk.StringVar(
             value=self.config.get("defaults", "pipeline", default="standard")
@@ -160,6 +166,7 @@ class Sidebar(ctk.CTkFrame):
             (self.output_format_var, "general", "defaultOutputFormat"),
             (self.output_dir_var, "general", "defaultOutputDir"),
             (self.processing_mode_var, "processing", "mode"),
+            (self.artifacts_path_var, "processing", "artifactsPath"),
             (self.pipeline_var, "defaults", "pipeline"),
             (self.ocr_var, "defaults", "ocrEnabled"),
             (self.force_ocr_var, "defaults", "forceOcr"),
@@ -329,7 +336,8 @@ class Sidebar(ctk.CTkFrame):
         content = proc_section.content
 
         # Mode dropdown
-        mode_frame = ctk.CTkFrame(content, fg_color="transparent")
+        self.mode_frame = ctk.CTkFrame(content, fg_color="transparent")
+        mode_frame = self.mode_frame
         mode_frame.pack(fill="x", pady=5)
 
         ctk.CTkLabel(
@@ -345,8 +353,39 @@ class Sidebar(ctk.CTkFrame):
             variable=self.processing_mode_var,
             values=["online", "offline"],
             width=150,
-            command=lambda v: self.processing_mode_var.set(v)
+            command=self._on_mode_change
         ).pack(side="left")
+
+        # Model Folder (only visible in offline mode)
+        self.artifacts_path_frame = ctk.CTkFrame(content, fg_color="transparent")
+
+        ctk.CTkLabel(
+            self.artifacts_path_frame,
+            text="Model Folder:",
+            font=ctk.CTkFont(size=12),
+            width=80,
+            anchor="w"
+        ).pack(side="left")
+
+        artifacts_entry_frame = ctk.CTkFrame(self.artifacts_path_frame, fg_color="transparent")
+        artifacts_entry_frame.pack(side="left", fill="x", expand=True)
+
+        ctk.CTkEntry(
+            artifacts_entry_frame,
+            textvariable=self.artifacts_path_var,
+            height=28
+        ).pack(side="left", fill="x", expand=True, padx=(0, 5))
+
+        ctk.CTkButton(
+            artifacts_entry_frame,
+            text="...",
+            command=self._on_browse_artifacts_path,
+            width=40,
+            height=28
+        ).pack(side="left")
+
+        # Set initial visibility
+        self._on_mode_change(self.processing_mode_var.get())
 
         # Pipeline dropdown
         self.pipeline_frame = ctk.CTkFrame(content, fg_color="transparent")
@@ -790,6 +829,24 @@ class Sidebar(ctk.CTkFrame):
         if directory:
             self.output_dir_var.set(directory)
             self.config.set("general", "defaultOutputDir", value=directory)
+
+    def _on_mode_change(self, mode: str):
+        """Handle processing mode dropdown change."""
+        if mode == "offline":
+            self.artifacts_path_frame.pack(fill="x", pady=5, after=self.mode_frame)
+        else:
+            self.artifacts_path_frame.pack_forget()
+
+    def _on_browse_artifacts_path(self):
+        """Handle model folder browse."""
+        from tkinter import filedialog
+        directory = filedialog.askdirectory(
+            title="Select Model Folder",
+            initialdir=self.artifacts_path_var.get()
+        )
+        if directory:
+            self.artifacts_path_var.set(directory)
+            self.config.set("processing", "artifactsPath", value=directory)
 
     def _on_pipeline_change(self, pipeline: str):
         """Handle pipeline dropdown change."""
